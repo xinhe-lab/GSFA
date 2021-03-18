@@ -1,0 +1,8 @@
+GSFA.Rproj
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+src/*.o
+src/*.so
+src/*.dll

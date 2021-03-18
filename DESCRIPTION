@@ -1,0 +1,13 @@
+Package: GSFA
+Type: Package
+Title: Bayesian Guided Sparse Factor Analysis
+Version: 0.1.0
+URL: https://github.com/gradonion/GSFA
+Authors@R: person("Yifan","Zhou",role=c("cre","aut"), email="zhouyf@uchicago.edu")
+Description: Performs Bayesian guided sparse factor analysis on gene expression matrix with matching sample-level genetic perturbation covariates.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports: Rcpp (>= 1.0.6)
+RoxygenNote: 7.1.1
+LinkingTo: Rcpp, RcppArmadillo
+NeedsCompilation: yes
