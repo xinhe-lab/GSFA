@@ -13,7 +13,7 @@ capturing the broad transcriptomic effects of perturbations. In this way, the in
 of factors are, to some extent, guided by the given perturbations.
 
 This package is developed by Yifan Zhou from the
-[He Lab](http://http://xinhelab.org) at the University of Chicago.
+[He Lab](http://xinhelab.org) at the University of Chicago.
 
 ## Quick Start
 
