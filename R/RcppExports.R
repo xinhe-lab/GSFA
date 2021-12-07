@@ -17,8 +17,12 @@ sample_gammaBeta_cpp <- function(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta) 
     .Call('_GSFA_sample_gammaBeta_cpp', PACKAGE = 'GSFA', N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta)
 }
 
-sample_FU_cpp <- function(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec) {
-    .Call('_GSFA_sample_FU_cpp', PACKAGE = 'GSFA', N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec)
+sample_W_cpp <- function(P, K, Y, Z, F, W, psi, sigma_w2, c2) {
+    .Call('_GSFA_sample_W_cpp', PACKAGE = 'GSFA', P, K, Y, Z, F, W, psi, sigma_w2, c2)
+}
+
+sample_F_cpp <- function(P, K, W, pi_vec, sigma_w2, c2) {
+    .Call('_GSFA_sample_F_cpp', PACKAGE = 'GSFA', P, K, W, pi_vec, sigma_w2, c2)
 }
 
 sample_psi_cpp <- function(N, P, Y, Z, F, W, prior_psi) {
@@ -33,8 +37,12 @@ sample_pi_beta_cpp <- function(M, K, Gamma, prior_pibeta) {
     .Call('_GSFA_sample_pi_beta_cpp', PACKAGE = 'GSFA', M, K, Gamma, prior_pibeta)
 }
 
-sample_sigma_w2_cpp <- function(K, F, W, prior_sigma2w) {
-    .Call('_GSFA_sample_sigma_w2_cpp', PACKAGE = 'GSFA', K, F, W, prior_sigma2w)
+sample_sigma_w2_cpp <- function(K, P, F, W, prior_sigma2w, c2) {
+    .Call('_GSFA_sample_sigma_w2_cpp', PACKAGE = 'GSFA', K, P, F, W, prior_sigma2w, c2)
+}
+
+sample_c2_cpp <- function(K, P, F, W, sigma2w, prior_c) {
+    .Call('_GSFA_sample_c2_cpp', PACKAGE = 'GSFA', K, P, F, W, sigma2w, prior_c)
 }
 
 sample_sigma_b2_cpp <- function(M, Gamma, beta, prior_sigma2b) {
@@ -53,19 +61,19 @@ initialize_given_Z <- function(K, Y, init_Z) {
     .Call('_GSFA_initialize_given_Z', PACKAGE = 'GSFA', K, Y, init_Z)
 }
 
-compute_posterior_mean_cpp <- function(Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, niter = 200L, ave_niter = 100L) {
-    .Call('_GSFA_compute_posterior_mean_cpp', PACKAGE = 'GSFA', Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, niter, ave_niter)
+compute_posterior_mean_cpp <- function(Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter = 200L, ave_niter = 100L) {
+    .Call('_GSFA_compute_posterior_mean_cpp', PACKAGE = 'GSFA', Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter, ave_niter)
 }
 
-compute_lfsr_cpp <- function(beta_mtx, W_mtx, use_niter = 100L) {
-    .Call('_GSFA_compute_lfsr_cpp', PACKAGE = 'GSFA', beta_mtx, W_mtx, use_niter)
+compute_lfsr_cpp <- function(beta_mtx, W_mtx, F_mtx, use_niter = 100L) {
+    .Call('_GSFA_compute_lfsr_cpp', PACKAGE = 'GSFA', beta_mtx, W_mtx, F_mtx, use_niter)
 }
 
-gsfa_gibbs_cpp <- function(Y, G, K, initialize = "svd", Z_given = NULL, prior_s = 200, prior_r = 0.1, prior_sb = 100, prior_rb = 0.2, prior_gp = 1, prior_hp = 1, prior_gb = 1, prior_hb = 1, prior_gw = 1, prior_hw = 1, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
-    .Call('_GSFA_gsfa_gibbs_cpp', PACKAGE = 'GSFA', Y, G, K, initialize, Z_given, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, niter, ave_niter, lfsr_niter, verbose, return_samples)
+gsfa_gibbs_cpp <- function(Y, G, K, initialize = "svd", Z_given = NULL, prior_s = 50, prior_r = 0.2, prior_sb = 20, prior_rb = 0.2, prior_gp = 1, prior_hp = 1, prior_gb = 1, prior_hb = 1, prior_gw = 1, prior_hw = 1, prior_gc = 3, prior_hc = 0.5, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
+    .Call('_GSFA_gsfa_gibbs_cpp', PACKAGE = 'GSFA', Y, G, K, initialize, Z_given, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples)
 }
 
-restart_gibbs_cpp <- function(Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, psi, sigma_w2, sigma_b2, prior_params, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
-    .Call('_GSFA_restart_gibbs_cpp', PACKAGE = 'GSFA', Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, psi, sigma_w2, sigma_b2, prior_params, niter, ave_niter, lfsr_niter, verbose, return_samples)
+restart_gsfa_gibbs_cpp <- function(Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, psi, sigma_w2, sigma_b2, c2, prior_params, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
+    .Call('_GSFA_restart_gsfa_gibbs_cpp', PACKAGE = 'GSFA', Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, psi, sigma_w2, sigma_b2, c2, prior_params, niter, ave_niter, lfsr_niter, verbose, return_samples)
 }
 

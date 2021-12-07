@@ -15,6 +15,7 @@ double Cquantile(arma::vec x, double q) {
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 arma::vec mvrnormArma(arma::vec mu, arma::mat sigma) {
+  // Uses the Cholesky decomposition
   int ncols = sigma.n_cols;
   arma::vec randvec = arma::randn(ncols);
   arma::mat decomp_mat = arma::chol(sigma);
@@ -81,38 +82,43 @@ List sample_gammaBeta_cpp(int N, int M, int K, arma::mat Z, arma::mat G,
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-List sample_FU_cpp(int N, int P, int K, arma::mat Y, arma::mat Z, arma::mat F, arma::mat W,
-                   arma::vec psi, arma::vec sigma_w2, arma::vec pi_vec){
+arma::mat sample_W_cpp(int P, int K, arma::mat Y, arma::mat Z, arma::mat F, arma::mat W,
+                       arma::vec psi, arma::vec sigma_w2, arma::vec c2){
 
   arma::mat log_qF = arma::zeros<arma::mat>(P,K);
   arma::mat lambda = arma::zeros<arma::mat>(P,K);
   arma::mat nu = arma::zeros<arma::mat>(P,K);
-  arma::rowvec sum_Z2 = sum(square(Z),0);
+  arma::mat ZTZ = Z.t()*Z;
 
   for (int j=0; j<P; j++) {
+    arma::vec diag_vec = arma::zeros<arma::vec>(K);
     for (int k=0; k<K; k++) {
-      lambda(j,k) = 1.0 / (sum_Z2(k)/psi(j) + 1/sigma_w2(k));
-      double sum_ZB = 0;
-      for (int i=0; i<N; i++){
-        sum_ZB = sum_ZB + Z(i,k) * (Y(i,j) - dot(Z.row(i), W.row(j)) + Z(i,k)*W(j,k));
-      }
-      nu(j,k) = lambda(j,k) * sum_ZB / psi(j);
+      diag_vec(k) = psi(j) / (sigma_w2(k) * (F(j,k) + (1-F(j,k))*c2(k)));
+    }
+    arma::mat D_j = diagmat(diag_vec);
+    arma::mat Lambda_j = inv_sympd(ZTZ + D_j);
+    arma::vec nu_j = Lambda_j * Z.t() * Y.col(j);
+    W.row(j) = arma::conv_to< arma::rowvec >::from(mvnrnd(nu_j, Lambda_j * psi(j)));
+  }
+  return W;
+}
 
-      log_qF(j,k) = std::log(lambda(j,k)/sigma_w2(k))/2 + nu(j,k)*nu(j,k)/(lambda(j,k)*2) +
-        std::log(pi_vec(k)) - std::log(1-pi_vec(k));
-      double qF = 1.0 / (std::exp(-log_qF(j,k)) + 1);
-
-      F(j,k) = R::rbinom(1, qF);
-      if (F(j,k)==1){
-        W(j,k) = R::rnorm(nu(j,k), sqrt(lambda(j,k)));
-        // U(j,k) = R::rnorm(nu(j,k),sqrt(lambda(j,k)));
+// [[Rcpp::depends("RcppArmadillo")]]
+// [[Rcpp::export]]
+arma::mat sample_F_cpp(int P, int K, arma::mat W, arma::vec pi_vec, arma::vec sigma_w2, arma::vec c2){
+  arma::mat F = arma::zeros<arma::mat>(P,K);
+  for (int j=0; j<P; j++) {
+    for (int k=0; k<K; k++) {
+      double ratio = pi_vec(k) / (1-pi_vec(k)) * sqrt(c2(k)) *
+        arma::trunc_exp(pow(W(j,k), 2)/(2*sigma_w2(k)) * (1.0/c2(k) - 1));
+      if (arma::is_finite(ratio)){
+        F(j,k) = R::rbinom(1, ratio/(1+ratio));
       } else {
-        W(j,k) = 0;
-        // U(j,k) = R::rnorm(0,sqrt(sigma_w2(k)));
+        F(j,k) = 1;
       }
     }
   }
-  return List::create(Named("F") = F, Named("W") = W);
+  return F;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -161,18 +167,31 @@ arma::vec sample_pi_beta_cpp(int M, int K, arma::mat Gamma, arma::vec prior_pibe
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::vec sample_sigma_w2_cpp(int K, arma::mat F, arma::mat W, arma::vec prior_sigma2w){
+arma::vec sample_sigma_w2_cpp(int K, int P, arma::mat F, arma::mat W, arma::vec prior_sigma2w, arma::vec c2){
   arma::vec sigma_w2_vec = arma::zeros<arma::vec>(K);
-  // arma::mat W = F%U;
-  arma::rowvec sum_W2 = sum(W%W,0); // colsum
-  arma::rowvec sum_F = sum(F,0);
   double a,b;
   for (int k=0; k<K; k++) {
-    a = prior_sigma2w(0) + sum_F(k)/2.0;
-    b = prior_sigma2w(1) + sum_W2(k)/2.0;
+    double sum_W2 = sum(W.col(k)%W.col(k) / (F.col(k)+(1-F.col(k))*c2(k)));
+    a = prior_sigma2w(0) + P/2.0;
+    b = prior_sigma2w(1) + sum_W2/2.0;
     sigma_w2_vec(k) = 1.0/R::rgamma(a, 1.0/b);
   }
   return sigma_w2_vec;
+}
+
+// [[Rcpp::depends("RcppArmadillo")]]
+// [[Rcpp::export]]
+arma::vec sample_c2_cpp(int K, int P, arma::mat F, arma::mat W, arma::vec sigma2w, arma::vec prior_c){
+  arma::vec c2 = arma::zeros<arma::vec>(K);
+  arma::rowvec sum_F = sum(F,0);
+  arma::rowvec sum_W2 = sum(W%W%(1-F), 0); // colsum
+  double a,b;
+  for (int k=0; k<K; k++) {
+    a = prior_c(0) + (P-sum_F(k))/2.0;
+    b = prior_c(1) + sum_W2(k)/(sigma2w(k)*2.0);
+    c2(k) = 1.0/R::rgamma(a, 1.0/b);
+  }
+  return c2;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -251,7 +270,9 @@ List initialize_given_Z(int K, arma::mat Y, arma::mat init_Z){
 // [[Rcpp::export]]
 List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
                                 arma::mat pi_beta_mtx, arma::cube Z_mtx,
-                                arma::cube F_mtx, arma::cube W_mtx, arma::mat pi_mtx,
+                                arma::cube F_mtx, arma::cube W_mtx,
+                                arma::mat pi_mtx, arma::mat sigma_w2_mtx,
+                                arma::mat c2_mtx,
                                 int niter=200, int ave_niter=100){
   int N = Z_mtx.n_rows;
   int P = F_mtx.n_rows;
@@ -265,6 +286,8 @@ List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
   arma::mat F_pm = arma::zeros<arma::mat>(P,K);
   arma::mat W_pm = arma::zeros<arma::mat>(P,K);
   arma::vec pi_pm = arma::zeros<arma::vec>(K);
+  arma::vec sigma_w2_pm = arma::zeros<arma::vec>(K);
+  arma::vec c2_pm = arma::zeros<arma::vec>(K);
 
   if (niter >= ave_niter){
     int start_iter = niter-ave_niter+1;
@@ -288,6 +311,12 @@ List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
 
     arma::mat pi_slice = pi_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
     pi_pm = sum(pi_slice,1) / ave_niter;
+
+    arma::mat sigma_w2_slice = sigma_w2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    sigma_w2_pm = sum(sigma_w2_slice,1) / ave_niter;
+
+    arma::mat c2_slices = c2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    c2_pm = sum(c2_slices,1) / ave_niter;
   } else {
     warning("Total number of iterations < specified number of iterations to average over, \
             returning the last samples as the estimates instead of posterior means over iterations.");
@@ -298,6 +327,8 @@ List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
     F_pm = F_mtx.slice(niter);
     W_pm = W_mtx.slice(niter);
     pi_pm = pi_mtx.col(niter);
+    sigma_w2_pm = sigma_w2_mtx.col(niter);
+    c2_pm = c2_mtx.col(niter);
   }
 
   return List::create(Named("Z_pm") = Z_pm,
@@ -306,12 +337,14 @@ List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
                       Named("Gamma_pm") = Gamma_pm,
                       Named("beta_pm") = beta_pm,
                       Named("pi_pm") = pi_pm,
-                      Named("pi_beta_pm") = pi_beta_pm);
+                      Named("pi_beta_pm") = pi_beta_pm,
+                      Named("sigma_w2_pm") = sigma_w2_pm,
+                      Named("c2_pm") = c2_pm);
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, int use_niter=100){
+arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx, int use_niter=100){
   int M = beta_mtx.n_rows;
   int K = beta_mtx.n_cols;
   int P = W_mtx.n_rows;
@@ -320,10 +353,13 @@ arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, int use_niter=
   arma::mat lfsr_mat = arma::zeros<arma::mat>(P,M);
   arma::mat beta_m = arma::zeros<arma::mat>(K,niter);
   arma::mat W_j = arma::zeros<arma::mat>(K,niter);
-  for (int m=0; m<M; m++) {
+  arma::mat F_j = arma::zeros<arma::mat>(K,niter);
+  for (int m=0; m<M; m++){
     beta_m = beta_mtx.row(m);
     for (int j=0; j<P; j++){
       W_j = W_mtx.row(j);
+      F_j = F_mtx.row(j);
+      W_j = W_j % F_j; // Set W to zero if F=0, since sparsity is not enforced
       arma::vec bw_prod(use_niter);
       for (int i=0; i<use_niter; i++){
         int slice_indx = niter-use_niter+i;
@@ -357,11 +393,12 @@ arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, int use_niter=
 List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                     String initialize="svd",
                     Rcpp::Nullable<Rcpp::NumericMatrix> Z_given=R_NilValue,
-                    double prior_s=200, double prior_r=0.1,
-                    double prior_sb=100, double prior_rb=0.2,
+                    double prior_s=50, double prior_r=0.2,
+                    double prior_sb=20, double prior_rb=0.2,
                     double prior_gp=1, double prior_hp=1,
                     double prior_gb=1, double prior_hb=1,
                     double prior_gw=1, double prior_hw=1,
+                    double prior_gc=3, double prior_hc=0.5,
                     int niter=500, int ave_niter=200, int lfsr_niter=200,
                     bool verbose=true, bool return_samples=true){
   // Initialization
@@ -373,7 +410,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                                    Named("prior_sb") = prior_sb, Named("prior_rb") = prior_rb,
                                    Named("prior_gp") = prior_gp, Named("prior_hp") = prior_hp,
                                    Named("prior_gb") = prior_gb, Named("prior_hb") = prior_hb,
-                                   Named("prior_gw") = prior_gw, Named("prior_hw") = prior_hw);
+                                   Named("prior_gw") = prior_gw, Named("prior_hw") = prior_hw,
+                                   Named("prior_gc") = prior_gc, Named("prior_hc") = prior_hc);
   arma::vec prior_pi(2);
   prior_pi(0) = prior_s;
   prior_pi(1) = prior_r;
@@ -403,6 +441,12 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   prior_sigma2w(1) = prior_hw;
   arma::vec sigma_w2(K);
   sigma_w2.fill(1.0);
+
+  arma::vec prior_c(2);
+  prior_c(0) = prior_gc;
+  prior_c(1) = prior_hc;
+  arma::vec c2(K);
+  c2.fill(0.25);
 
   arma::mat Z,F,W;
   List intial_params;
@@ -456,10 +500,14 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   pi_mtx.col(0) = pi_vec;
   arma::mat pi_beta_mtx = arma::zeros<arma::mat>(M,niter+1);
   pi_beta_mtx.col(0) = pi_beta;
+  arma::mat sigma_w2_mtx = arma::zeros<arma::mat>(K,niter+1);
+  sigma_w2_mtx.col(0) = sigma_w2;
+  arma::mat c2_mtx = arma::zeros<arma::mat>(K,niter+1);
+  c2_mtx.col(0) = c2;
 
   // Gibbs Sampling:
   List gammaBeta;
-  List FW;
+  // List FW;
   int iter = 1;
 
   while (iter <= niter) {
@@ -472,11 +520,11 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     Z = sample_Z_cpp(N,K,Y,F,W,G,beta,psi);
     psi = sample_psi_cpp(N,P,Y,Z,F,W,prior_psi);
 
-    FW = sample_FU_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-    F = as<arma::mat>(FW["F"]);
-    W = as<arma::mat>(FW["W"]);
+    W = sample_W_cpp(P, K, Y, Z, F, W, psi, sigma_w2, c2);
+    F = sample_F_cpp(P, K, W, pi_vec, sigma_w2, c2);
     pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-    sigma_w2 = sample_sigma_w2_cpp(K, F, W, prior_sigma2w);
+    sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
+    c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
 
     // Store samples through iterations:
     Gamma_mtx.slice(iter) = Gamma;
@@ -486,6 +534,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     F_mtx.slice(iter) = F;
     W_mtx.slice(iter) = W;
     pi_mtx.col(iter) = pi_vec;
+    sigma_w2_mtx.col(iter) = sigma_w2;
+    c2_mtx.col(iter) = c2;
 
     if (verbose) {
       if (iter % 50 == 0) {
@@ -501,14 +551,16 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                              Named("pi_vec") = pi_vec, Named("pi_beta") = pi_beta,
                              Named("psi") = psi,
                              Named("sigma_w2") = sigma_w2, Named("sigma_b2") = sigma_b2,
+                             Named("c2") = c2,
                              Named("niters") = niter, Named("average_niters") = ave_niter);
   // Compute the posterior means:
   List pm_list;
   pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx,
-                                       F_mtx, W_mtx, pi_mtx, niter, ave_niter);
+                                       F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx,
+                                       niter, ave_niter);
   // Compute local false sign rate for each guide-gene pair:
   arma::mat lfsr_mat(P,M);
-  lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, lfsr_niter);
+  lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter);
   if (return_samples) {
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
@@ -520,6 +572,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                         Named("beta_samples") = beta_mtx,
                         Named("pi_samples") = pi_mtx,
                         Named("pi_beta_samples") = pi_beta_mtx,
+                        Named("sigma_w2_samples") = sigma_w2_mtx,
+                        Named("c2_samples") = c2_mtx,
                         Named("prior_params") = prior_params);
   } else {
     return List::create(Named("updates") = update_list,
@@ -532,14 +586,15 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
 //' @export
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-List restart_gibbs_cpp(arma::mat Y, arma::mat G,
-                       arma::mat Z, arma::mat F, arma::mat W,
-                       arma::mat Gamma, arma::mat beta,
-                       arma::vec pi_vec, arma::vec pi_beta,
-                       arma::vec psi, arma::vec sigma_w2, arma::vec sigma_b2,
-                       List prior_params,
-                       int niter=500, int ave_niter=200, int lfsr_niter=200,
-                       bool verbose=true, bool return_samples=true){
+List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
+                            arma::mat Z, arma::mat F, arma::mat W,
+                            arma::mat Gamma, arma::mat beta,
+                            arma::vec pi_vec, arma::vec pi_beta,
+                            arma::vec psi, arma::vec sigma_w2, arma::vec sigma_b2,
+                            arma::vec c2,
+                            List prior_params,
+                            int niter=500, int ave_niter=200, int lfsr_niter=200,
+                            bool verbose=true, bool return_samples=true){
   // Preparation:
   int N = Y.n_rows;
   int P = Y.n_cols;
@@ -566,6 +621,10 @@ List restart_gibbs_cpp(arma::mat Y, arma::mat G,
   prior_sigma2b(0) = as<double>(prior_params["prior_gb"]);
   prior_sigma2b(1) = as<double>(prior_params["prior_hb"]);
 
+  arma::vec prior_c(2);
+  prior_c(0) = as<double>(prior_params["prior_gc"]);
+  prior_c(1) = as<double>(prior_params["prior_hc"]);
+
   arma::cube Z_mtx = arma::zeros<arma::cube>(N,K,niter+1);
   Z_mtx.slice(0) = Z;
   arma::cube F_mtx = arma::zeros<arma::cube>(P,K,niter+1);
@@ -582,6 +641,10 @@ List restart_gibbs_cpp(arma::mat Y, arma::mat G,
   pi_mtx.col(0) = pi_vec;
   arma::mat pi_beta_mtx = arma::zeros<arma::mat>(M,niter+1);
   pi_beta_mtx.col(0) = pi_beta;
+  arma::mat sigma_w2_mtx = arma::zeros<arma::mat>(K,niter+1);
+  sigma_w2_mtx.col(0) = sigma_w2;
+  arma::mat c2_mtx = arma::zeros<arma::mat>(K,niter+1);
+  c2_mtx.col(0) = c2;
 
   // Gibbs Sampling:
   List FW;
@@ -598,11 +661,11 @@ List restart_gibbs_cpp(arma::mat Y, arma::mat G,
     Z = sample_Z_cpp(N,K,Y,F,W,G,beta,psi);
     psi = sample_psi_cpp(N,P,Y,Z,F,W,prior_psi);
 
-    FW = sample_FU_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-    F = as<arma::mat>(FW["F"]);
-    W = as<arma::mat>(FW["W"]);
+    W = sample_W_cpp(P, K, Y, Z, F, W, psi, sigma_w2, c2);
+    F = sample_F_cpp(P, K,  W, pi_vec, sigma_w2, c2);
     pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-    sigma_w2 = sample_sigma_w2_cpp(K, F, W, prior_sigma2w);
+    sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
+    c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
 
     // Store samples through iterations:
     Gamma_mtx.slice(iter) = Gamma;
@@ -612,6 +675,8 @@ List restart_gibbs_cpp(arma::mat Y, arma::mat G,
     F_mtx.slice(iter) = F;
     W_mtx.slice(iter) = W;
     pi_mtx.col(iter) = pi_vec;
+    sigma_w2_mtx.col(iter) = sigma_w2;
+    c2_mtx.col(iter) = c2;
 
     if (verbose) {
       if (iter % 50 == 0) {
@@ -628,14 +693,16 @@ List restart_gibbs_cpp(arma::mat Y, arma::mat G,
                              Named("pi_vec") = pi_vec, Named("pi_beta") = pi_beta,
                              Named("psi") = psi,
                              Named("sigma_w2") = sigma_w2, Named("sigma_b2") = sigma_b2,
+                             Named("c2") = c2,
                              Named("niters") = niter, Named("average_niters") = ave_niter);
   // Compute the posterior means:
   List pm_list;
   pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx,
-                                       F_mtx, W_mtx, pi_mtx, niter, ave_niter);
+                                       F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx,
+                                       niter, ave_niter);
   // Compute local false sign rate for each guide-gene pair:
   arma::mat lfsr_mat(P,M);
-  lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, lfsr_niter);
+  lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter);
   if (return_samples) {
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
@@ -647,6 +714,8 @@ List restart_gibbs_cpp(arma::mat Y, arma::mat G,
                         Named("beta_samples") = beta_mtx,
                         Named("pi_samples") = pi_mtx,
                         Named("pi_beta_samples") = pi_beta_mtx,
+                        Named("sigma_w2_samples") = sigma_w2_mtx,
+                        Named("c2_samples") = c2_mtx,
                         Named("prior_params") = prior_params);
   } else {
     return List::create(Named("updates") = update_list,

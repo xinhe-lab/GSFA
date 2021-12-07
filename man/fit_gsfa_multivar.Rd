@@ -12,13 +12,14 @@ fit_gsfa_multivar(
   init.method = c("svd", "random", "given"),
   prior_w_s = 50,
   prior_w_r = 0.2,
-  prior_beta_s = 10,
+  prior_beta_s = 20,
   prior_beta_r = 0.2,
   niter = 500,
   average_niter = 200,
   lfsr_niter = average_niter,
   verbose = TRUE,
-  return_samples = FALSE
+  return_samples = TRUE,
+  seed = 12345
 )
 }
 \arguments{

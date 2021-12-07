@@ -28,9 +28,10 @@
 fit_gsfa_multivar <- function(Y, G, K, fit0,
                               init.method = c("svd", "random", "given"),
                               prior_w_s = 50, prior_w_r = 0.2,
-                              prior_beta_s = 10, prior_beta_r = 0.2,
+                              prior_beta_s = 20, prior_beta_r = 0.2,
                               niter = 500, average_niter = 200, lfsr_niter = average_niter,
-                              verbose = TRUE, return_samples = FALSE){
+                              verbose = TRUE, return_samples = TRUE,
+                              seed = 12345){
   init.method <- match.arg(init.method)
   stopifnot(is.matrix(Y))
   # Add an offset of 1
@@ -50,6 +51,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
          "or a Gibbs initialization, \"fit0\", but not both.")
   }
 
+  set.seed(seed)
   if (missing(fit0)){
     fit <- gsfa_gibbs_cpp(Y = Y, G = G, K = K,
                           initialize = init.method,
@@ -64,15 +66,16 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
       stop("Input argument \"fit0\" should be an object of class ",
            "\"gsfa_fit\", such as an output of fit_gsfa_multivar().")
     }
-    fit <- restart_gibbs_cpp(Y = Y, G = G,
-                             Z = fit0$updates$Z, F = fit0$updates$F, W = fit0$updates$W,
-                             Gamma = fit0$updates$Gamma, beta = fit0$updates$beta,
-                             pi_vec = fit0$updates$pi_vec, pi_beta = fit0$updates$pi_beta,
-                             psi = fit0$updates$psi,
-                             sigma_w2 = fit0$updates$sigma_w2, sigma_b2 = fit0$updates$sigma_b2,
-                             prior_params = fit0$prior_params,
-                             niter = niter, ave_niter = average_niter, lfsr_niter = lfsr_niter,
-                             verbose = verbose, return_samples = return_samples)
+    fit <- restart_gsfa_gibbs_cpp(Y = Y, G = G,
+                                  Z = fit0$updates$Z, F = fit0$updates$F, W = fit0$updates$W,
+                                  Gamma = fit0$updates$Gamma, beta = fit0$updates$beta,
+                                  pi_vec = fit0$updates$pi_vec, pi_beta = fit0$updates$pi_beta,
+                                  psi = fit0$updates$psi,
+                                  sigma_w2 = fit0$updates$sigma_w2, sigma_b2 = fit0$updates$sigma_b2,
+                                  c2 = fit0$updates$c2,
+                                  prior_params = fit0$prior_params,
+                                  niter = niter, ave_niter = average_niter, lfsr_niter = lfsr_niter,
+                                  verbose = verbose, return_samples = return_samples)
   }
   class(fit) <- c("gsfa_fit", "list")
   return(fit)
