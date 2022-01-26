@@ -2,16 +2,25 @@
 #' @description Performs GSFA on given gene expression matrix and matching perturbation
 #' (guide) information using Gibbs sampling.
 #' @details Uses functions implemented in Rcpp from \code{GSFA_gibbs_inference.cpp}.
-#' @param Y A numeric matrix that stores sample by gene normalized gene expression values;
+#' @param Y A sample by gene numeric matrix that stores normalized gene expression values;
 #' \code{is.matrix(Y)} should be \code{TRUE};
-#' @param G Either a numeric vector or a numeric matrix that stores sample-level guide information;
+#' @param G Either a numeric vector of length n_sample or a sample by perturbation
+#' numeric matrix that stores sample-level perturbation information;
 #' length or nrow of \code{G} should be the same as \code{nrow(Y)};
-#' @param K An integer specifying the number of factors in the model; only one of \code{K}
+#' @param K Number of factors to use in the model; only one of \code{K}
 #' and \code{fit0} is needed;
 #' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous \code{fit_gsfa_multivar}
 #' run, so that more iterations of Gibbs sampling can be carried out on top of it;
 #' only one of \code{K} and \code{fit0} is needed;
-#' @param init.method The method to initialize the factors, can be one of "svd", "random", "given";
+#' @param prior_type Type of sparse prior used on gene weights, can be "mixture_normal"
+#' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
+#' @param init.method Method to initialize the factors, can be one of
+#' "svd", "random", "given";
+#' @param niter Total number of Gibbs sampling iterations;
+#' @param average_niter Number of last iterations to obtain the posterior samples of parameters;
+#' @param lfsr_niter Number of last iterations of posterior samples to compute LFSR from;
+#' @param return_samples Boolean indicator of whether all posterior samples throughout
+#' Gibbs sampling should be returned;
 #' @return A list of class 'gsfa_fit' which stores the Gibbs sampling updates
 #' and posterior mean estimates, and the prior parameters used during the inference.
 #' @importFrom Rcpp evalCpp
@@ -26,12 +35,14 @@
 #' fit1 <- fit_gsfa_multivar(Y, G, fit0 = fit0, niter = 500, average_niter = 200)
 #' }
 fit_gsfa_multivar <- function(Y, G, K, fit0,
+                              prior_type = c("mixture_normal", "spike_slab"),
                               init.method = c("svd", "random", "given"),
                               prior_w_s = 50, prior_w_r = 0.2,
                               prior_beta_s = 20, prior_beta_r = 0.2,
                               niter = 500, average_niter = 200, lfsr_niter = average_niter,
                               verbose = TRUE, return_samples = TRUE,
                               seed = 12345){
+  prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
   stopifnot(is.matrix(Y))
   # Add an offset of 1
@@ -54,6 +65,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
   set.seed(seed)
   if (missing(fit0)){
     fit <- gsfa_gibbs_cpp(Y = Y, G = G, K = K,
+                          prior_type = prior_type,
                           initialize = init.method,
                           prior_s = prior_w_s, prior_r = prior_w_r,
                           prior_sb = prior_beta_s, prior_rb = prior_beta_r,
@@ -74,6 +86,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                                   sigma_w2 = fit0$updates$sigma_w2, sigma_b2 = fit0$updates$sigma_b2,
                                   c2 = fit0$updates$c2,
                                   prior_params = fit0$prior_params,
+                                  prior_type = prior_type,
                                   niter = niter, ave_niter = average_niter, lfsr_niter = lfsr_niter,
                                   verbose = verbose, return_samples = return_samples)
   }
