@@ -27,8 +27,8 @@ fit_gsfa_multivar(
 \item{Y}{A sample by gene numeric matrix that stores normalized gene expression values;
 \code{is.matrix(Y)} should be \code{TRUE};}
 
-\item{G}{Either a numeric vector of length n_sample or a sample by perturbation
-numeric matrix that stores sample-level perturbation information;
+\item{G}{Either a numeric vector or a sample by perturbation numeric matrix
+that stores sample-level perturbation information;
 length or nrow of \code{G} should be the same as \code{nrow(Y)};}
 
 \item{K}{Number of factors to use in the model; only one of \code{K}
@@ -42,7 +42,7 @@ only one of \code{K} and \code{fit0} is needed;}
 or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;}
 
 \item{init.method}{Method to initialize the factors, can be one of
-"svd", "random", "given";}
+"svd" (truncated SVD on \code{Y}) or "random";}
 
 \item{niter}{Total number of Gibbs sampling iterations;}
 

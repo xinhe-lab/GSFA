@@ -47,11 +47,24 @@ pearson_residual_transform <- function(count_mat){
   return(resid_mat)
 }
 
-select_top_devres_genes <- function(dev_res, num_top_genes = 6000){
-  dev_stats_df <- data.frame(stats = colSums(dev_res^2) / nrow(dev_res),
-                             index = 1:ncol(dev_res))
+#' @title Feature Selection Based on the Deviance Statistics of Genes
+#' @description Select the top genes ranked by deviance statistics.
+#' @param dev_resid_mat A sample by gene numeric matrix that stores deviance residuals;
+#' @param num_top_genes Number of top genes to keep;
+#' @return A numeric vector that stores the indices of top \code{num_top_genes}
+#' genes ranked by deviance statistics.
+#'
+#' @importFrom dplyr arrange
+#' @importFrom dplyr slice
+#' @importFrom dplyr pull
+#'
+#' @export
+select_top_devres_genes <- function(dev_resid_mat, num_top_genes = 6000){
+  dev_stats_df <- data.frame(stats = colSums(dev_resid_mat^2) / nrow(dev_resid_mat),
+                             index = 1:ncol(dev_resid_mat))
   keep_index <- dev_stats_df %>% arrange(-stats) %>% slice(1:num_top_genes) %>% pull(index)
-  return(dev_res[, keep_index])
+  return(keep_index)
+  # reduced matrix: dev_resid_mat[, keep_index]
 }
 
 #' @title Covariate Correction for Gene Expression Matrix
