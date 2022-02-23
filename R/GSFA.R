@@ -98,19 +98,36 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                                   verbose = verbose,
                                   return_samples = return_samples)
   }
-  factor_names <- paste0("Factor_", 1:ncol(fit$Z_pm))
-  rownames(fit$posterior_means$Z_pm) <- rownames(Y)
+  factor_names <- paste0("Factor_", 1:ncol(fit$posterior_means$Z_pm))
+  if (is.null(rownames(Y))){
+    sample_names <- 1:nrow(Y)
+  } else {
+    sample_names <- rownames(Y)
+  }
+  if (is.null(colnames(Y))){
+    gene_names <- 1:ncol(Y)
+  } else {
+    gene_names <- colnames(Y)
+  }
+  G <- G[, -ncol(G)]
+  if (is.null(colnames(G))){
+    perturbation_names <- 1:ncol(G)
+  } else {
+    perturbation_names <- colnames(G)
+  }
+
+  rownames(fit$posterior_means$Z_pm) <- sample_names
   colnames(fit$posterior_means$Z_pm) <- factor_names
-  rownames(fit$posterior_means$F_pm) <- colnames(Y)
+  rownames(fit$posterior_means$F_pm) <- gene_names
   colnames(fit$posterior_means$F_pm) <- factor_names
-  rownames(fit$posterior_means$W_pm) <- colnames(Y)
+  rownames(fit$posterior_means$W_pm) <- gene_names
   colnames(fit$posterior_means$W_pm) <- factor_names
-  rownames(fit$posterior_means$Gamma_pm) <- c(colnames(G), "offset")
+  rownames(fit$posterior_means$Gamma_pm) <- c(perturbation_names, "offset")
   colnames(fit$posterior_means$Gamma_pm) <- factor_names
-  rownames(fit$posterior_means$beta_pm) <- c(colnames(G), "offset")
+  rownames(fit$posterior_means$beta_pm) <- c(perturbation_names, "offset")
   colnames(fit$posterior_means$beta_pm) <- factor_names
-  rownames(fit$lfsr) <- colnames(Y)
-  colnames(fit$lfsr) <- c(colnames(G), "offset")
+  rownames(fit$lfsr) <- gene_names
+  colnames(fit$lfsr) <- c(perturbation_names, "offset")
   class(fit) <- c("gsfa_fit", "list")
   return(fit)
 }

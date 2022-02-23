@@ -28,7 +28,7 @@ thresholding the local false sign rate (_LFSR_).
 If you find the GSFA package or any of the source code in this
 repository useful for your work, please cite:
 
-> Yifan Zhou, Kevin Luo, Mengjie Chen and Xin He. 
+> Yifan Zhou, Kaixuan Luo, Mengjie Chen and Xin He. 
 > A novel Bayesian factor analysis method improves detection of genes and 
 > biological processes affected by perturbations in single-cell CRISPR screening. 
 > *bioRxiv* doi: 10.1101/2022.02.13.480282 (2021).
