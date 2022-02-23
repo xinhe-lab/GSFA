@@ -14,7 +14,6 @@ normal_data_sim(
   sigma_w2_true = rep(0.5, K),
   psi_true = 1,
   G_prob = 0.05,
-  seed = 46568,
   offset = FALSE
 )
 }

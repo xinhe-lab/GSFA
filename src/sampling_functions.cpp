@@ -337,6 +337,22 @@ List initialize_given_Z(int K, arma::mat Y, arma::mat init_Z){
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
+List initialize_gammaBeta(int M, int K, arma::mat G, arma::mat Z){
+  arma::mat beta = arma::zeros<arma::mat>(M,K);
+  arma::vec tmp_beta;
+  for (int m=0; m<M; m++){
+    arma::vec G_col = G.col(m);
+    arma::vec tmp_beta = Z.t() * G_col / (sum(G_col%G_col)+1e-4);
+    beta.row(m) = arma::conv_to< arma::rowvec >::from(tmp_beta);
+  }
+  arma::umat init_bool = abs(beta) > Cquantile(vectorise(abs(beta)), 0.5);
+  arma::mat Gamma = arma::conv_to< arma::mat >::from(init_bool);
+  beta = beta % Gamma;
+  return List::create(Named("Gamma") = Gamma, Named("beta") = beta);
+}
+
+// [[Rcpp::depends("RcppArmadillo")]]
+// [[Rcpp::export]]
 List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
                                 arma::mat pi_beta_mtx, arma::cube Z_mtx,
                                 arma::cube F_mtx, arma::cube W_mtx,
@@ -425,6 +441,116 @@ List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
                         Named("pi_beta_pm") = pi_beta_pm,
                         Named("sigma_w2_pm") = sigma_w2_pm);
   }
+}
+
+// [[Rcpp::depends("RcppArmadillo")]]
+// [[Rcpp::export]]
+List compute_posterior_mean_2groups_cpp(arma::cube Gamma0_mtx, arma::cube beta0_mtx,
+                                        arma::mat pi_beta0_mtx, arma::cube Gamma1_mtx,
+                                        arma::cube beta1_mtx, arma::mat pi_beta1_mtx,
+                                        arma::cube Z_mtx, arma::cube F_mtx,
+                                        arma::cube W_mtx, arma::mat pi_mtx,
+                                        arma::mat sigma_w2_mtx, arma::mat c2_mtx,
+                                        int niter=200, int ave_niter=100,
+                                        String prior_type="mixture_normal"){
+  int N = Z_mtx.n_rows;
+  int P = F_mtx.n_rows;
+  int M = beta0_mtx.n_rows;
+  int K = Z_mtx.n_cols;
+
+  arma::mat Gamma0_pm = arma::zeros<arma::mat>(M,K);
+  arma::mat beta0_pm = arma::zeros<arma::mat>(M,K);
+  arma::vec pi_beta0_pm = arma::zeros<arma::vec>(M);
+
+  arma::mat Gamma1_pm = arma::zeros<arma::mat>(M,K);
+  arma::mat beta1_pm = arma::zeros<arma::mat>(M,K);
+  arma::vec pi_beta1_pm = arma::zeros<arma::vec>(M);
+
+  arma::mat Z_pm = arma::zeros<arma::mat>(N,K);
+  arma::mat F_pm = arma::zeros<arma::mat>(P,K);
+  arma::mat W_pm = arma::zeros<arma::mat>(P,K);
+  arma::vec pi_pm = arma::zeros<arma::vec>(K);
+  arma::vec sigma_w2_pm = arma::zeros<arma::vec>(K);
+  arma::vec c2_pm = arma::zeros<arma::vec>(K);
+
+  if (niter >= ave_niter){
+    int start_iter = niter-ave_niter+1;
+    arma::cube Gamma0_slice = Gamma0_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    Gamma0_pm = sum(Gamma0_slice,2) / ave_niter;
+
+    arma::cube beta0_slice = beta0_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    beta0_pm = sum(beta0_slice,2) / ave_niter;
+
+    arma::mat pi_beta0_slice = pi_beta0_mtx(arma::span(0, M-1), arma::span(start_iter, niter));
+    pi_beta0_pm = sum(pi_beta0_slice,1) / ave_niter;
+
+    arma::cube Gamma1_slice = Gamma1_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    Gamma1_pm = sum(Gamma1_slice,2) / ave_niter;
+
+    arma::cube beta1_slice = beta1_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    beta1_pm = sum(beta1_slice,2) / ave_niter;
+
+    arma::mat pi_beta1_slice = pi_beta1_mtx(arma::span(0, M-1), arma::span(start_iter, niter));
+    pi_beta1_pm = sum(pi_beta1_slice,1) / ave_niter;
+
+    arma::cube Z_slice = Z_mtx(arma::span(0, N-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    Z_pm = sum(Z_slice,2) / ave_niter;
+
+    arma::cube F_slice = F_mtx(arma::span(0, P-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    F_pm = sum(F_slice,2) / ave_niter;
+
+    arma::cube W_slice = W_mtx(arma::span(0, P-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    W_pm = sum(W_slice,2) / ave_niter;
+
+    arma::mat pi_slice = pi_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    pi_pm = sum(pi_slice,1) / ave_niter;
+
+    arma::mat sigma_w2_slice = sigma_w2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    sigma_w2_pm = sum(sigma_w2_slice,1) / ave_niter;
+    if (prior_type=="mixture_normal") {
+      arma::mat c2_slices = c2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+      c2_pm = sum(c2_slices,1) / ave_niter;
+    }
+  } else {
+    warning("Total number of iterations < specified number of iterations to average over, \
+            returning the last samples as the estimates instead of posterior means over iterations.");
+    Gamma0_pm = Gamma0_mtx.slice(niter);
+    beta0_pm = beta0_mtx.slice(niter);
+    pi_beta0_pm = pi_beta0_mtx.col(niter);
+    Gamma1_pm = Gamma1_mtx.slice(niter);
+    beta1_pm = beta1_mtx.slice(niter);
+    pi_beta1_pm = pi_beta1_mtx.col(niter);
+    Z_pm = Z_mtx.slice(niter);
+    F_pm = F_mtx.slice(niter);
+    W_pm = W_mtx.slice(niter);
+    pi_pm = pi_mtx.col(niter);
+    sigma_w2_pm = sigma_w2_mtx.col(niter);
+    if (prior_type=="mixture_normal") {
+      c2_pm = c2_mtx.col(niter);
+    }
+  }
+
+  if (prior_type=="mixture_normal") {
+    return List::create(Named("Z_pm") = Z_pm,
+                        Named("F_pm") = F_pm,
+                        Named("W_pm") = W_pm,
+                        Named("Gamma0_pm") = Gamma0_pm, Named("Gamma1_pm") = Gamma1_pm,
+                        Named("beta0_pm") = beta0_pm, Named("beta1_pm") = beta1_pm,
+                        Named("pi_pm") = pi_pm,
+                        Named("pi_beta0_pm") = pi_beta0_pm, Named("pi_beta1_pm") = pi_beta1_pm,
+                        Named("sigma_w2_pm") = sigma_w2_pm,
+                        Named("c2_pm") = c2_pm);
+  } else{
+    return List::create(Named("Z_pm") = Z_pm,
+                        Named("F_pm") = F_pm,
+                        Named("W_pm") = W_pm,
+                        Named("Gamma0_pm") = Gamma0_pm, Named("Gamma1_pm") = Gamma1_pm,
+                        Named("beta0_pm") = beta0_pm, Named("beta1_pm") = beta1_pm,
+                        Named("pi_pm") = pi_pm,
+                        Named("pi_beta0_pm") = pi_beta0_pm, Named("pi_beta1_pm") = pi_beta1_pm,
+                        Named("sigma_w2_pm") = sigma_w2_pm);
+  }
+
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]

@@ -9,6 +9,14 @@ restart_gsfa_gibbs_cpp <- function(Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, 
     .Call('_GSFA_restart_gsfa_gibbs_cpp', PACKAGE = 'GSFA', Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, psi, sigma_w2, sigma_b2, c2, prior_params, prior_type, niter, ave_niter, lfsr_niter, verbose, return_samples)
 }
 
+gsfa_gibbs_2groups_cpp <- function(Y, G, group, K, prior_type = "mixture_normal", initialize = "svd", Z_given = NULL, prior_s = 50, prior_r = 0.1, prior_sb = 20, prior_rb = 0.2, prior_gp = 1, prior_hp = 1, prior_gb = 1, prior_hb = 1, prior_gw = 1, prior_hw = 1, prior_gc = 3, prior_hc = 0.5, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
+    .Call('_GSFA_gsfa_gibbs_2groups_cpp', PACKAGE = 'GSFA', Y, G, group, K, prior_type, initialize, Z_given, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples)
+}
+
+restart_gibbs_2groups_cpp <- function(Y, G, group, Z, F, W, Gamma0, Gamma1, beta0, beta1, pi_vec, pi_beta0, pi_beta1, psi, sigma_w2, sigma_b20, sigma_b21, c2, prior_params, prior_type = "mixture_normal", niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
+    .Call('_GSFA_restart_gibbs_2groups_cpp', PACKAGE = 'GSFA', Y, G, group, Z, F, W, Gamma0, Gamma1, beta0, beta1, pi_vec, pi_beta0, pi_beta1, psi, sigma_w2, sigma_b20, sigma_b21, c2, prior_params, prior_type, niter, ave_niter, lfsr_niter, verbose, return_samples)
+}
+
 Cquantile <- function(x, q) {
     .Call('_GSFA_Cquantile', PACKAGE = 'GSFA', x, q)
 }
@@ -77,8 +85,16 @@ initialize_given_Z <- function(K, Y, init_Z) {
     .Call('_GSFA_initialize_given_Z', PACKAGE = 'GSFA', K, Y, init_Z)
 }
 
+initialize_gammaBeta <- function(M, K, G, Z) {
+    .Call('_GSFA_initialize_gammaBeta', PACKAGE = 'GSFA', M, K, G, Z)
+}
+
 compute_posterior_mean_cpp <- function(Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter = 200L, ave_niter = 100L, prior_type = "mixture_normal") {
     .Call('_GSFA_compute_posterior_mean_cpp', PACKAGE = 'GSFA', Gamma_mtx, beta_mtx, pi_beta_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter, ave_niter, prior_type)
+}
+
+compute_posterior_mean_2groups_cpp <- function(Gamma0_mtx, beta0_mtx, pi_beta0_mtx, Gamma1_mtx, beta1_mtx, pi_beta1_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter = 200L, ave_niter = 100L, prior_type = "mixture_normal") {
+    .Call('_GSFA_compute_posterior_mean_2groups_cpp', PACKAGE = 'GSFA', Gamma0_mtx, beta0_mtx, pi_beta0_mtx, Gamma1_mtx, beta1_mtx, pi_beta1_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter, ave_niter, prior_type)
 }
 
 compute_lfsr_cpp <- function(beta_mtx, W_mtx, F_mtx, use_niter = 100L, prior_type = "mixture_normal") {

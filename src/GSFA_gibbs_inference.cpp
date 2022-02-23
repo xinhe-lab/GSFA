@@ -6,15 +6,15 @@ using namespace Rcpp;
 // FUNCTION DEFINITIONS
 // ---------------------
 
-//' Perform guided sparse factor analysis (GSFA) on the given expression matrix and guide matrix
-//' using Gibbs sampling.
+//' Perform guided sparse factor analysis (GSFA) given a normalized expression
+//' matrix and a perturbation matrix using Gibbs sampling.
 //'
-//' @param Y sample by feature numeric matrix
-//' @param G sample by covariate numeric matrix
+//' @param Y sample by gene numeric matrix
+//' @param G sample by perturbation numeric matrix
 //' @param K number of factors to infer in the model
 //' @param prior_type character value indicating which prior to use on gene weights, recommend
 //' to use the default "mixture_normal" (mixture-of-normals),
-//' but "spkie_slab" (spike-and-slab) is also an option, but is sometimes insufficient to impose sparsity
+//' but "spike_slab" (spike-and-slab) is also an option, but is sometimes insufficient to impose sparsity
 //' @param initialize character value indicating which initialization method to use, can be one of
 //' "svd", "random", or "given"
 //' @param niter a numeric value indicating the total number of iterations Gibbs sampling should last
@@ -304,11 +304,9 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
   arma::mat c2_mtx(K,niter+1, arma::fill::zeros);
 
   if (prior_type=="mixture_normal") {
-    c2.fill(0.25);
     c2_mtx.col(0) = c2;
   }
   if (prior_type=="spike_slab") {
-    c2.fill(R_NaN);
     c2_mtx.fill(R_NaN);
   }
 

@@ -74,6 +74,75 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// gsfa_gibbs_2groups_cpp
+List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K, String prior_type, String initialize, Rcpp::Nullable<Rcpp::NumericMatrix> Z_given, double prior_s, double prior_r, double prior_sb, double prior_rb, double prior_gp, double prior_hp, double prior_gb, double prior_hb, double prior_gw, double prior_hw, double prior_gc, double prior_hc, int niter, int ave_niter, int lfsr_niter, bool verbose, bool return_samples);
+RcppExport SEXP _GSFA_gsfa_gibbs_2groups_cpp(SEXP YSEXP, SEXP GSEXP, SEXP groupSEXP, SEXP KSEXP, SEXP prior_typeSEXP, SEXP initializeSEXP, SEXP Z_givenSEXP, SEXP prior_sSEXP, SEXP prior_rSEXP, SEXP prior_sbSEXP, SEXP prior_rbSEXP, SEXP prior_gpSEXP, SEXP prior_hpSEXP, SEXP prior_gbSEXP, SEXP prior_hbSEXP, SEXP prior_gwSEXP, SEXP prior_hwSEXP, SEXP prior_gcSEXP, SEXP prior_hcSEXP, SEXP niterSEXP, SEXP ave_niterSEXP, SEXP lfsr_niterSEXP, SEXP verboseSEXP, SEXP return_samplesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< String >::type prior_type(prior_typeSEXP);
+    Rcpp::traits::input_parameter< String >::type initialize(initializeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type Z_given(Z_givenSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_s(prior_sSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_r(prior_rSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_sb(prior_sbSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_rb(prior_rbSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_gp(prior_gpSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_hp(prior_hpSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_gb(prior_gbSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_hb(prior_hbSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_gw(prior_gwSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_hw(prior_hwSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_gc(prior_gcSEXP);
+    Rcpp::traits::input_parameter< double >::type prior_hc(prior_hcSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    Rcpp::traits::input_parameter< int >::type ave_niter(ave_niterSEXP);
+    Rcpp::traits::input_parameter< int >::type lfsr_niter(lfsr_niterSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< bool >::type return_samples(return_samplesSEXP);
+    rcpp_result_gen = Rcpp::wrap(gsfa_gibbs_2groups_cpp(Y, G, group, K, prior_type, initialize, Z_given, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples));
+    return rcpp_result_gen;
+END_RCPP
+}
+// restart_gibbs_2groups_cpp
+List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, arma::mat Z, arma::mat F, arma::mat W, arma::mat Gamma0, arma::mat Gamma1, arma::mat beta0, arma::mat beta1, arma::vec pi_vec, arma::vec pi_beta0, arma::vec pi_beta1, arma::vec psi, arma::vec sigma_w2, arma::vec sigma_b20, arma::vec sigma_b21, arma::vec c2, List prior_params, String prior_type, int niter, int ave_niter, int lfsr_niter, bool verbose, bool return_samples);
+RcppExport SEXP _GSFA_restart_gibbs_2groups_cpp(SEXP YSEXP, SEXP GSEXP, SEXP groupSEXP, SEXP ZSEXP, SEXP FSEXP, SEXP WSEXP, SEXP Gamma0SEXP, SEXP Gamma1SEXP, SEXP beta0SEXP, SEXP beta1SEXP, SEXP pi_vecSEXP, SEXP pi_beta0SEXP, SEXP pi_beta1SEXP, SEXP psiSEXP, SEXP sigma_w2SEXP, SEXP sigma_b20SEXP, SEXP sigma_b21SEXP, SEXP c2SEXP, SEXP prior_paramsSEXP, SEXP prior_typeSEXP, SEXP niterSEXP, SEXP ave_niterSEXP, SEXP lfsr_niterSEXP, SEXP verboseSEXP, SEXP return_samplesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type group(groupSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type W(WSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Gamma0(Gamma0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Gamma1(Gamma1SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type beta0(beta0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type beta1(beta1SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type pi_vec(pi_vecSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type pi_beta0(pi_beta0SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type pi_beta1(pi_beta1SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sigma_w2(sigma_w2SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sigma_b20(sigma_b20SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sigma_b21(sigma_b21SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type c2(c2SEXP);
+    Rcpp::traits::input_parameter< List >::type prior_params(prior_paramsSEXP);
+    Rcpp::traits::input_parameter< String >::type prior_type(prior_typeSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    Rcpp::traits::input_parameter< int >::type ave_niter(ave_niterSEXP);
+    Rcpp::traits::input_parameter< int >::type lfsr_niter(lfsr_niterSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< bool >::type return_samples(return_samplesSEXP);
+    rcpp_result_gen = Rcpp::wrap(restart_gibbs_2groups_cpp(Y, G, group, Z, F, W, Gamma0, Gamma1, beta0, beta1, pi_vec, pi_beta0, pi_beta1, psi, sigma_w2, sigma_b20, sigma_b21, c2, prior_params, prior_type, niter, ave_niter, lfsr_niter, verbose, return_samples));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Cquantile
 double Cquantile(arma::vec x, double q);
 RcppExport SEXP _GSFA_Cquantile(SEXP xSEXP, SEXP qSEXP) {
@@ -332,6 +401,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// initialize_gammaBeta
+List initialize_gammaBeta(int M, int K, arma::mat G, arma::mat Z);
+RcppExport SEXP _GSFA_initialize_gammaBeta(SEXP MSEXP, SEXP KSEXP, SEXP GSEXP, SEXP ZSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Z(ZSEXP);
+    rcpp_result_gen = Rcpp::wrap(initialize_gammaBeta(M, K, G, Z));
+    return rcpp_result_gen;
+END_RCPP
+}
 // compute_posterior_mean_cpp
 List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx, arma::mat pi_beta_mtx, arma::cube Z_mtx, arma::cube F_mtx, arma::cube W_mtx, arma::mat pi_mtx, arma::mat sigma_w2_mtx, arma::mat c2_mtx, int niter, int ave_niter, String prior_type);
 RcppExport SEXP _GSFA_compute_posterior_mean_cpp(SEXP Gamma_mtxSEXP, SEXP beta_mtxSEXP, SEXP pi_beta_mtxSEXP, SEXP Z_mtxSEXP, SEXP F_mtxSEXP, SEXP W_mtxSEXP, SEXP pi_mtxSEXP, SEXP sigma_w2_mtxSEXP, SEXP c2_mtxSEXP, SEXP niterSEXP, SEXP ave_niterSEXP, SEXP prior_typeSEXP) {
@@ -354,6 +437,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_posterior_mean_2groups_cpp
+List compute_posterior_mean_2groups_cpp(arma::cube Gamma0_mtx, arma::cube beta0_mtx, arma::mat pi_beta0_mtx, arma::cube Gamma1_mtx, arma::cube beta1_mtx, arma::mat pi_beta1_mtx, arma::cube Z_mtx, arma::cube F_mtx, arma::cube W_mtx, arma::mat pi_mtx, arma::mat sigma_w2_mtx, arma::mat c2_mtx, int niter, int ave_niter, String prior_type);
+RcppExport SEXP _GSFA_compute_posterior_mean_2groups_cpp(SEXP Gamma0_mtxSEXP, SEXP beta0_mtxSEXP, SEXP pi_beta0_mtxSEXP, SEXP Gamma1_mtxSEXP, SEXP beta1_mtxSEXP, SEXP pi_beta1_mtxSEXP, SEXP Z_mtxSEXP, SEXP F_mtxSEXP, SEXP W_mtxSEXP, SEXP pi_mtxSEXP, SEXP sigma_w2_mtxSEXP, SEXP c2_mtxSEXP, SEXP niterSEXP, SEXP ave_niterSEXP, SEXP prior_typeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::cube >::type Gamma0_mtx(Gamma0_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type beta0_mtx(beta0_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type pi_beta0_mtx(pi_beta0_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type Gamma1_mtx(Gamma1_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type beta1_mtx(beta1_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type pi_beta1_mtx(pi_beta1_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type Z_mtx(Z_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type F_mtx(F_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type W_mtx(W_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type pi_mtx(pi_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma_w2_mtx(sigma_w2_mtxSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type c2_mtx(c2_mtxSEXP);
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    Rcpp::traits::input_parameter< int >::type ave_niter(ave_niterSEXP);
+    Rcpp::traits::input_parameter< String >::type prior_type(prior_typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_posterior_mean_2groups_cpp(Gamma0_mtx, beta0_mtx, pi_beta0_mtx, Gamma1_mtx, beta1_mtx, pi_beta1_mtx, Z_mtx, F_mtx, W_mtx, pi_mtx, sigma_w2_mtx, c2_mtx, niter, ave_niter, prior_type));
+    return rcpp_result_gen;
+END_RCPP
+}
 // compute_lfsr_cpp
 arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx, int use_niter, String prior_type);
 RcppExport SEXP _GSFA_compute_lfsr_cpp(SEXP beta_mtxSEXP, SEXP W_mtxSEXP, SEXP F_mtxSEXP, SEXP use_niterSEXP, SEXP prior_typeSEXP) {
@@ -373,6 +481,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_GSFA_gsfa_gibbs_cpp", (DL_FUNC) &_GSFA_gsfa_gibbs_cpp, 23},
     {"_GSFA_restart_gsfa_gibbs_cpp", (DL_FUNC) &_GSFA_restart_gsfa_gibbs_cpp, 20},
+    {"_GSFA_gsfa_gibbs_2groups_cpp", (DL_FUNC) &_GSFA_gsfa_gibbs_2groups_cpp, 24},
+    {"_GSFA_restart_gibbs_2groups_cpp", (DL_FUNC) &_GSFA_restart_gibbs_2groups_cpp, 25},
     {"_GSFA_Cquantile", (DL_FUNC) &_GSFA_Cquantile, 2},
     {"_GSFA_mvrnormArma", (DL_FUNC) &_GSFA_mvrnormArma, 2},
     {"_GSFA_sample_Z_cpp", (DL_FUNC) &_GSFA_sample_Z_cpp, 8},
@@ -390,7 +500,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_GSFA_initialize_random", (DL_FUNC) &_GSFA_initialize_random, 2},
     {"_GSFA_initialize_svd", (DL_FUNC) &_GSFA_initialize_svd, 2},
     {"_GSFA_initialize_given_Z", (DL_FUNC) &_GSFA_initialize_given_Z, 3},
+    {"_GSFA_initialize_gammaBeta", (DL_FUNC) &_GSFA_initialize_gammaBeta, 4},
     {"_GSFA_compute_posterior_mean_cpp", (DL_FUNC) &_GSFA_compute_posterior_mean_cpp, 12},
+    {"_GSFA_compute_posterior_mean_2groups_cpp", (DL_FUNC) &_GSFA_compute_posterior_mean_2groups_cpp, 15},
     {"_GSFA_compute_lfsr_cpp", (DL_FUNC) &_GSFA_compute_lfsr_cpp, 5},
     {NULL, NULL, 0}
 };

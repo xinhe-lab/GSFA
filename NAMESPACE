@@ -3,6 +3,7 @@
 export(covariate_removal)
 export(deviance_residual_transform)
 export(fit_gsfa_multivar)
+export(fit_gsfa_multivar_2groups)
 export(normal_data_sim)
 export(pearson_residual_transform)
 export(poisson_count_sim_var_scale)

@@ -61,6 +61,8 @@ Rcpp::List initialize_svd(int K, arma::mat Y);
 
 Rcpp::List initialize_given_Z(int K, arma::mat Y, arma::mat init_Z);
 
+Rcpp::List initialize_gammaBeta(int M, int K, arma::mat G, arma::mat Z);
+
 Rcpp::List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
                                       arma::mat pi_beta_mtx, arma::cube Z_mtx,
                                       arma::cube F_mtx, arma::cube W_mtx,
@@ -68,6 +70,15 @@ Rcpp::List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
                                       arma::mat c2_mtx,
                                       int niter, int ave_niter,
                                       Rcpp::String prior_type);
+
+Rcpp::List compute_posterior_mean_2groups_cpp(arma::cube Gamma0_mtx, arma::cube beta0_mtx,
+                                              arma::mat pi_beta0_mtx, arma::cube Gamma1_mtx,
+                                              arma::cube beta1_mtx, arma::mat pi_beta1_mtx,
+                                              arma::cube Z_mtx, arma::cube F_mtx,
+                                              arma::cube W_mtx, arma::mat pi_mtx,
+                                              arma::mat sigma_w2_mtx, arma::mat c2_mtx,
+                                              int niter, int ave_niter,
+                                              Rcpp::String prior_type);
 
 arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
                            int use_niter, Rcpp::String prior_type);
