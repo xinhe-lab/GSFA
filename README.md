@@ -44,15 +44,31 @@ To install the development version of the `GSFA` package from Github, run:
 
 ```R
 install.packages("devtools")
-devtools::install_github("gradonion/GSFA")
+devtools::install_github("gradonion/GSFA", build_vignettes = TRUE)
+```
+
+If you have cloned the repository locally, you can install the package with the 
+`install_local` function from devtools. Assuming you are in the local GSFA repository, 
+run this code to install the package:
+
+```R
+devtools::install_local(build_vignettes = TRUE)
 ```
 
 Note that installing the package will require a C++ compiler setup that is appropriate for the version of R installed on your computer.
 
 ## Using the package
 
-For guidance on using GSFA to analyze single-cell CRISPR screen data, please see the code in this 
-[repository][paper_github], and analysis results for the paper [here][result_website].
+Please see this package vignette for using GSFA on a simulated example:
+
+```R
+library(GSFA)
+vignette("gsfa_intro")
+```
+
+For guidance on using GSFA to analyze real single-cell CRISPR screen data, 
+please refer to the code in this [repository][paper_github], and 
+analysis results for the paper [here][result_website].
 
 ## Credits
 
