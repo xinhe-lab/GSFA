@@ -26,8 +26,7 @@ normal_data_sim <- function(N = 400, P = 600, K = 5, M = 2,
                                                ncol = K),
                             pi_true = rep(0.1, K), sigma_w2_true = rep(0.5, K),
                             psi_true = 1, G_prob = 0.05,
-                            seed = 46568, offset = FALSE){
-  set.seed(seed)
+                            offset = FALSE){
   stopifnot(length(sigma_w2_true) == K & length(pi_true) == K & ncol(beta_true) == K)
 
   G <- matrix(rbinom(n = N * M, size = 1, prob = G_prob),

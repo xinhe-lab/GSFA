@@ -1,0 +1,120 @@
+---
+title: "Illustration of GSFA Application on Simulated Data"
+author: "Yifan Zhou"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{gsfa_intro}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE,
+                      results = "hold",
+                      warning = FALSE,
+                      comment = NA,
+                      fig.align = "center")
+```
+
+## Environment set-up
+
+Load the `GSFA` package:
+
+```{r load-pkgs}
+library(GSFA)
+```
+
+```{r}
+set.seed(46568)
+```
+
+## Simulate a data set 
+
+We generate a normal gene expression matrix $Y$ with 400 samples and 600 genes 
+and a binary perturbation matrix $G$ with 2 types of perturbations according to:
+
+$$G_{im} \overset{i.i.d.}{\sim} \text{Bern}(0.2), 
+\phi_{ik} \overset{i.i.d.}{\sim} N(0,0.5) \Rightarrow Z = G \beta + \Phi,$$
+$$F_{jk} \overset{i.i.d.}{\sim} \text{Bern}(0.1), 
+U_{jk} \overset{i.i.d.}{\sim} N(0, 0.5) \Rightarrow W_{jk}=F_{jk}\cdot U_{jk},$$
+$$E_{ij} \overset{i.i.d.}{\sim} N(0,1) \Rightarrow Y = ZW^T+E.$$
+Gene expression $Y$ was generated from 5 factors, with each factor has ~0.1 of 
+all genes with non-zero loading in it. 
+
+The true association effects between factors and perturbations, $\beta$, are set to:
+\begin{pmatrix}
+1 & 0 & 0 & 0 & 0 \\
+0 & 0.8 & 0 & 0 & 0
+\end{pmatrix}
+
+That is, the 1st factor is associated with perturbation 1, 
+and the 2nd factor associated with perturbation 2. 
+
+```{r sim-data-normal}
+beta_true <- matrix(c(1, 0, 0, 0.8, 0, 0, 0, 0, 0, 0), ncol = 5)
+sim_data <- normal_data_sim(N = 400, P = 600, K = 5, M = 2,
+                            beta_true = beta_true,
+                            pi_true = rep(0.1, 5),
+                            psi_true = 0.5, G_prob = 0.2)
+```
+
+## Fit GSFA
+
+Run GSFA given the normal expression data and binary perturbation matrix:
+
+```{r fit-normal}
+fit <- fit_gsfa_multivar(Y = sim_data$Y, G = sim_data$G,
+                         K = 5, init.method = "svd",
+                         prior_w_s = 10, prior_w_r = 0.2,
+                         prior_beta_s = 5, prior_beta_r = 0.2,
+                         niter = 1000, average_niter = 500, lfsr_niter = 500,
+                         verbose = T, return_samples = T)
+```
+
+Estimated associations between factors and perturbations  
+(note that factors are interchangeable, so their orders won't necessarily match the 
+original):
+
+```{r print-beta}
+signif(fit$posterior_means$beta_pm[-nrow(fit$posterior_means$beta_pm), ],
+       digits = 3)
+```
+
+Differential genes detected under perturbation 1:
+
+```{r}
+genes_detected1 <- which(fit$lfsr[, 1] < 0.05)
+print(paste0(length(genes_detected1), " genes passed LFSR < 0.05."))
+
+genes_factor1 <- which(sim_data$F[, 1] > 0)
+num_olap1 <- length(intersect(genes_detected1, genes_detected1))
+# Sensitivity:
+sens1 <- num_olap1 / length(genes_factor1)
+print(paste0("Sensitivity: ", signif(sens1, digits = 3)))
+# Specificity:
+fpr1 <- (length(genes_detected1) - num_olap1) / (sum(sim_data$F[, 1] == 0))
+print(paste0("Specificity: ", signif(1 - fpr1, digits = 3)))
+```
+
+Differential genes detected under perturbation 2:
+
+```{r}
+genes_detected2 <- which(fit$lfsr[, 2] < 0.05)
+print(paste0(length(genes_detected2), " genes passed LFSR < 0.05."))
+
+genes_factor2 <- which(sim_data$F[, 2] > 0)
+num_olap2 <- length(intersect(genes_detected2, genes_detected2))
+# Sensitivity:
+sens2 <- num_olap2 / length(genes_factor2)
+print(paste0("Sensitivity: ", signif(sens2, digits = 3)))
+# Specificity:
+fpr2 <- (length(genes_detected2) - num_olap2) / (sum(sim_data$F[, 2] == 0))
+print(paste0("Specificity: ", signif(1 - fpr2, digits = 3)))
+```
+
+## Session information
+
+```{r session-info}
+sessionInfo()
+```
