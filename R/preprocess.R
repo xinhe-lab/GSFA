@@ -54,6 +54,7 @@ pearson_residual_transform <- function(count_mat){
 #' @return A numeric vector that stores the indices of top \code{num_top_genes}
 #' genes ranked by deviance statistics.
 #'
+#' @importFrom magrittr %>%
 #' @importFrom dplyr arrange
 #' @importFrom dplyr slice
 #' @importFrom dplyr pull

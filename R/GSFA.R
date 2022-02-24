@@ -40,8 +40,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                               prior_w_s = 50, prior_w_r = 0.2,
                               prior_beta_s = 20, prior_beta_r = 0.2,
                               niter = 500, average_niter = 200, lfsr_niter = average_niter,
-                              verbose = TRUE, return_samples = TRUE,
-                              seed = 12345){
+                              verbose = TRUE, return_samples = TRUE){
   prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
   stopifnot(is.matrix(Y))
@@ -62,7 +61,6 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
          "or a Gibbs initialization, \"fit0\", but not both.")
   }
 
-  set.seed(seed)
   if (missing(fit0)){
     fit <- gsfa_gibbs_cpp(Y = Y, G = G, K = K,
                           prior_type = prior_type,
@@ -176,8 +174,7 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                       prior_w_s = 50, prior_w_r = 0.2,
                                       prior_beta_s = 20, prior_beta_r = 0.2,
                                       niter = 500, average_niter = 200, lfsr_niter = average_niter,
-                                      verbose = TRUE, return_samples = TRUE,
-                                      seed = 12345){
+                                      verbose = TRUE, return_samples = TRUE){
   prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
   stopifnot(is.matrix(Y))
@@ -198,7 +195,6 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
          "or a Gibbs initialization, \"fit0\", but not both.")
   }
 
-  set.seed(seed)
   if (missing(fit0)){
     fit <- gsfa_gibbs_2groups_cpp(Y = Y, G = G, group = group, K = K,
                                   prior_type = prior_type,

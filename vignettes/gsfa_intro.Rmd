@@ -10,10 +10,12 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE,
-                      results = "hold",
+knitr::opts_chunk$set(results = "hold",
+                      message = FALSE,
                       warning = FALSE,
                       comment = NA,
+                      fig.width = 6,
+                      fig.height = 4,
                       fig.align = "center")
 ```
 
@@ -72,45 +74,103 @@ fit <- fit_gsfa_multivar(Y = sim_data$Y, G = sim_data$G,
                          verbose = T, return_samples = T)
 ```
 
-Estimated associations between factors and perturbations  
-(note that factors are interchangeable, so their orders won't necessarily match the 
-original):
+## Interpretation
+
+### Perturbation effects on factors
+
+Note that factors are interchangeable, so their orders won't necessarily match the 
+original.
+
+The estimated associations between factors and perturbations are:
 
 ```{r print-beta}
 signif(fit$posterior_means$beta_pm[-nrow(fit$posterior_means$beta_pm), ],
        digits = 3)
 ```
 
-Differential genes detected under perturbation 1:
+Factor 3 is associated with perturbation 1 with an absolute effect size of ~1.  
+Factor 2 is associated with perturbation 2 with an absolute effect size of ~0.8.
+
+The PIPs (posterior inclusion probability, a measurement of certainty) of associations between factors and perturbations are:
+
+```{r print-gamma}
+signif(fit$posterior_means$Gamma_pm[-nrow(fit$posterior_means$Gamma_pm), ],
+       digits = 3)
+```
+
+Associations with high certainty are:  
+Factor 3 ~ Perturbation 1 and Factor 2 ~ Perturbation 2.  
+
+Visualization of perturbation effects on factors:
+
+```{r fig.width=6, fig.height=4}
+dotplot_beta_PIP(fit, target_names = c("Perturbation 1", "Perturbation 2"))
+```
+
+### Factor interpretation
+
+Genes with non-zero loading on factors can be obtained by thresholding the gene PIP.
+
+For example, non-zero genes in factor 2 are:
+
+```{r}
+est_genes_factor2 <- which(fit$posterior_means$F_pm[, 2] > 0.95)
+```
+
+Compare with genes truly in factor 2:
+```{r}
+true_genes_factor2 <- which(sim_data$F[, 2] > 0)
+num_olap <- length(intersect(est_genes_factor2, true_genes_factor2))
+# Sensitivity:
+sens <- num_olap / length(true_genes_factor2)
+print(paste0("Sensitivity: ", signif(sens, digits = 3)))
+# Specificity:
+fpr <- (length(est_genes_factor2) - num_olap) / (sum(sim_data$F[, 2] == 0))
+print(paste0("Specificity: ", signif(1 - fpr, digits = 3)))
+```
+
+### Perturbation effects on genes
+
+Differentially expressed genes (DEGs) can be detected by thresholding LFSR.
+
+DEGs detected under Perturbation 1 and the sensitivity and specificity of discovery:
 
 ```{r}
 genes_detected1 <- which(fit$lfsr[, 1] < 0.05)
 print(paste0(length(genes_detected1), " genes passed LFSR < 0.05."))
 
-genes_factor1 <- which(sim_data$F[, 1] > 0)
-num_olap1 <- length(intersect(genes_detected1, genes_detected1))
+true_genes_factor1 <- which(sim_data$F[, 1] > 0)
+num_olap1 <- length(intersect(genes_detected1, true_genes_factor1))
 # Sensitivity:
-sens1 <- num_olap1 / length(genes_factor1)
+sens1 <- num_olap1 / length(true_genes_factor1)
 print(paste0("Sensitivity: ", signif(sens1, digits = 3)))
 # Specificity:
 fpr1 <- (length(genes_detected1) - num_olap1) / (sum(sim_data$F[, 1] == 0))
 print(paste0("Specificity: ", signif(1 - fpr1, digits = 3)))
 ```
 
-Differential genes detected under perturbation 2:
+DEGs detected under Perturbation 2 and the sensitivity and specificity of discovery:
 
 ```{r}
 genes_detected2 <- which(fit$lfsr[, 2] < 0.05)
 print(paste0(length(genes_detected2), " genes passed LFSR < 0.05."))
 
-genes_factor2 <- which(sim_data$F[, 2] > 0)
-num_olap2 <- length(intersect(genes_detected2, genes_detected2))
+true_genes_factor2 <- which(sim_data$F[, 2] > 0)
+num_olap2 <- length(intersect(genes_detected2, true_genes_factor2))
 # Sensitivity:
-sens2 <- num_olap2 / length(genes_factor2)
+sens2 <- num_olap2 / length(true_genes_factor2)
 print(paste0("Sensitivity: ", signif(sens2, digits = 3)))
 # Specificity:
 fpr2 <- (length(genes_detected2) - num_olap2) / (sum(sim_data$F[, 2] == 0))
 print(paste0("Specificity: ", signif(1 - fpr2, digits = 3)))
+```
+
+Visualization of the total effects each perturbation has on selected genes:
+
+```{r fig.width=4, fig.height=6}
+dotplot_total_effect(fit,
+                     gene_indices = c(1, 12, 14, 88, 89, 91, 123),
+                     target_names = c("Perturbation 1", "Perturbation 2"))
 ```
 
 ## Session information

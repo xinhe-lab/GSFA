@@ -19,8 +19,7 @@ fit_gsfa_multivar(
   average_niter = 200,
   lfsr_niter = average_niter,
   verbose = TRUE,
-  return_samples = TRUE,
-  seed = 12345
+  return_samples = TRUE
 )
 }
 \arguments{
