@@ -7,6 +7,8 @@ using namespace arma;
 // ---------------------
 void move_seed_rbinom();
 
+double Cquantile(arma::vec x, double q);
+
 // FUNCTION DEFINITIONS
 // ---------------------
 
@@ -14,8 +16,6 @@ void move_seed_rbinom(){
   double tmp = R::rbinom(1, 0.5);
 }
 
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
 double Cquantile(arma::vec x, double q) {
   vec y = x;
   y = sort(y);
@@ -27,8 +27,8 @@ double Cquantile(arma::vec x, double q) {
 arma::vec mvrnormArma(arma::vec mu, arma::mat sigma) {
   // Uses the Cholesky decomposition
   int ncols = sigma.n_cols;
-  arma::vec randvec = arma::randn(ncols);
-  arma::mat decomp_mat = arma::chol(sigma);
+  vec randvec = randn(ncols);
+  mat decomp_mat = chol(sigma);
   return mu + decomp_mat.t() * randvec;
 }
 
@@ -37,19 +37,19 @@ arma::vec mvrnormArma(arma::vec mu, arma::mat sigma) {
 arma::mat sample_Z_cpp(int N,int K,
                        arma::mat Y, arma::mat F, arma::mat W,
                        arma::mat G, arma::mat beta, arma::vec psi){
-  mat Z = arma::zeros<arma::mat>(N,K);
-  arma::mat Psi_inv = diagmat(1/psi); // 1/(psi_x_vector+0.000001) when necessary
-  arma::vec I(K);
+  mat Z = zeros<mat>(N,K);
+  mat Psi_inv = diagmat(1/psi); // 1/(psi_x_vector+0.000001) when necessary
+  vec I(K);
   I.ones();
-  arma::mat WTP = W.t() * Psi_inv;
-  arma::mat Sigma = inv_sympd(WTP * W + diagmat(I));
-  arma::vec mu_i(K);
-  arma::vec tmp_i(K);
+  mat WTP = W.t() * Psi_inv;
+  mat Sigma = inv_sympd(WTP * W + diagmat(I));
+  vec mu_i(K);
+  vec tmp_i(K);
   for (int i=0; i<N; i++) {
-    arma::colvec Y_i = arma::conv_to< arma::colvec >::from(Y.row(i));
+    colvec Y_i = conv_to< colvec >::from(Y.row(i));
     tmp_i = (G.row(i) * beta).t();
     mu_i = Sigma * (WTP * Y_i + tmp_i);
-    Z.row(i) = arma::conv_to< arma::rowvec >::from(mvnrnd(mu_i, Sigma));
+    Z.row(i) = conv_to< rowvec >::from(mvnrnd(mu_i, Sigma));
   }
   // mvnrnd(mu,sigma,n) returns n column vectors
   return Z;
@@ -63,9 +63,9 @@ List sample_gammaBeta_cpp(int N, int M, int K,
                           arma::vec sigma_b2, arma::vec pi_beta){
   double log_qgamma;
   double qgamma;
-  arma::mat mu = arma::zeros<arma::mat>(M,K);
-  arma::mat L = arma::zeros<arma::mat>(M,K);
-  arma::rowvec sum_G2 = sum(square(G),0);
+  mat mu = zeros<mat>(M,K);
+  mat L = zeros<mat>(M,K);
+  rowvec sum_G2 = sum(square(G),0);
 
   for (int k=0; k<K; k++) {
     for (int m=0; m<M; m++) {
@@ -108,20 +108,20 @@ arma::mat sample_W_cpp(int P, int K,
                        arma::mat F, arma::mat W,
                        arma::vec psi, arma::vec sigma_w2, arma::vec c2){
 
-  arma::mat log_qF = arma::zeros<arma::mat>(P,K);
-  arma::mat lambda = arma::zeros<arma::mat>(P,K);
-  arma::mat nu = arma::zeros<arma::mat>(P,K);
-  arma::mat ZTZ = Z.t()*Z;
+  mat log_qF = zeros<mat>(P,K);
+  mat lambda = zeros<mat>(P,K);
+  mat nu = zeros<mat>(P,K);
+  mat ZTZ = Z.t()*Z;
 
   for (int j=0; j<P; j++) {
-    arma::vec diag_vec = arma::zeros<arma::vec>(K);
+    vec diag_vec = zeros<vec>(K);
     for (int k=0; k<K; k++) {
       diag_vec(k) = psi(j) / (sigma_w2(k) * (F(j,k) + (1-F(j,k))*c2(k)));
     }
-    arma::mat D_j = diagmat(diag_vec);
-    arma::mat Lambda_j = inv_sympd(ZTZ + D_j);
-    arma::vec nu_j = Lambda_j * Z.t() * Y.col(j);
-    W.row(j) = arma::conv_to< arma::rowvec >::from(mvnrnd(nu_j, Lambda_j * psi(j)));
+    mat D_j = diagmat(diag_vec);
+    mat Lambda_j = inv_sympd(ZTZ + D_j);
+    vec nu_j = Lambda_j * Z.t() * Y.col(j);
+    W.row(j) = conv_to< rowvec >::from(mvnrnd(nu_j, Lambda_j * psi(j)));
   }
   return W;
 }
@@ -133,7 +133,7 @@ arma::mat sample_F_cpp(int P, int K,
                        arma::vec sigma_w2, arma::vec c2){
   double log_ratio;
   double ratio;
-  arma::mat F = arma::zeros<arma::mat>(P,K);
+  mat F = zeros<mat>(P,K);
   for (int j=0; j<P; j++) {
     for (int k=0; k<K; k++) {
       log_ratio = std::log(pi_vec(k)) - std::log(1-pi_vec(k)) +
@@ -162,10 +162,10 @@ List sample_FW_spike_slab_cpp(int N, int P, int K,
                               arma::mat F, arma::mat W,
                               arma::vec psi, arma::vec sigma_w2, arma::vec pi_vec){
 
-  arma::mat log_qF = arma::zeros<arma::mat>(P,K);
-  arma::mat lambda = arma::zeros<arma::mat>(P,K);
-  arma::mat nu = arma::zeros<arma::mat>(P,K);
-  arma::rowvec sum_Z2 = sum(square(Z),0);
+  mat log_qF = zeros<mat>(P,K);
+  mat lambda = zeros<mat>(P,K);
+  mat nu = zeros<mat>(P,K);
+  rowvec sum_Z2 = sum(square(Z),0);
 
   for (int j=0; j<P; j++) {
     for (int k=0; k<K; k++) {
@@ -183,10 +183,8 @@ List sample_FW_spike_slab_cpp(int N, int P, int K,
       F(j,k) = R::rbinom(1, qF);
       if (F(j,k)==1){
         W(j,k) = R::rnorm(nu(j,k), sqrt(lambda(j,k)));
-        // U(j,k) = R::rnorm(nu(j,k),sqrt(lambda(j,k)));
       } else {
         W(j,k) = 0;
-        // U(j,k) = R::rnorm(0,sqrt(sigma_w2(k)));
       }
     }
   }
@@ -198,10 +196,10 @@ List sample_FW_spike_slab_cpp(int N, int P, int K,
 arma::vec sample_psi_cpp(int N, int P,
                          arma::mat Y, arma::mat Z, arma::mat F, arma::mat W,
                          arma::vec prior_psi){
-  arma::vec psi = arma::zeros<arma::vec>(P);
-  // arma::mat W = F%U;
-  arma::mat E = Y-Z*W.t();
-  arma::rowvec sum_E2 = sum(E%E,0);
+  vec psi = zeros<vec>(P);
+  // mat W = F%U;
+  mat E = Y-Z*W.t();
+  rowvec sum_E2 = sum(E%E,0);
   double a,b;
   a = prior_psi(0) + N/2.0;
   for (int j=0; j<P; j++) {
@@ -214,8 +212,8 @@ arma::vec sample_psi_cpp(int N, int P,
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 arma::vec sample_pi_cpp(int P, int K, arma::mat F, arma::vec prior_pi){
-  arma::vec pi_vec = arma::zeros<arma::vec>(K);
-  arma::rowvec sum_F = sum(F,0); // colsum returns a row vector!
+  vec pi_vec = zeros<vec>(K);
+  rowvec sum_F = sum(F,0); // colsum returns a row vector!
   double a,b;
   for (int k=0; k<K; k++) {
     a = prior_pi(0)*prior_pi(1) + sum_F(k);
@@ -229,8 +227,8 @@ arma::vec sample_pi_cpp(int P, int K, arma::mat F, arma::vec prior_pi){
 // [[Rcpp::export]]
 arma::vec sample_pi_beta_cpp(int M, int K,
                              arma::mat Gamma, arma::vec prior_pibeta){
-  arma::vec pi_beta = arma::zeros<arma::vec>(M);
-  arma::colvec sum_Gamma = sum(Gamma,1); // rowsum returns a column vector!
+  vec pi_beta = zeros<vec>(M);
+  colvec sum_Gamma = sum(Gamma,1); // rowsum returns a column vector!
   double a,b;
   for (int m=0; m<M; m++) {
     a = prior_pibeta(0)*prior_pibeta(1) + sum_Gamma(m);
@@ -245,7 +243,7 @@ arma::vec sample_pi_beta_cpp(int M, int K,
 arma::vec sample_sigma_w2_cpp(int K, int P,
                               arma::mat F, arma::mat W,
                               arma::vec prior_sigma2w, arma::vec c2){
-  arma::vec sigma_w2_vec = arma::zeros<arma::vec>(K);
+  vec sigma_w2_vec = zeros<vec>(K);
   double a,b;
   for (int k=0; k<K; k++) {
     double sum_W2 = sum(W.col(k)%W.col(k) / (F.col(k)+(1-F.col(k))*c2(k)));
@@ -260,10 +258,10 @@ arma::vec sample_sigma_w2_cpp(int K, int P,
 // [[Rcpp::export]]
 arma::vec sample_sigma_w2_spike_slab_cpp(int K, arma::mat F, arma::mat W,
                                          arma::vec prior_sigma2w){
-  arma::vec sigma_w2_vec = arma::zeros<arma::vec>(K);
-  // arma::mat W = F%U;
-  arma::rowvec sum_W2 = sum(W%W,0); // colsum
-  arma::rowvec sum_F = sum(F,0);
+  vec sigma_w2_vec = zeros<vec>(K);
+  // mat W = F%U;
+  rowvec sum_W2 = sum(W%W,0); // colsum
+  rowvec sum_F = sum(F,0);
   double a,b;
   for (int k=0; k<K; k++) {
     a = prior_sigma2w(0) + sum_F(k)/2.0;
@@ -278,9 +276,9 @@ arma::vec sample_sigma_w2_spike_slab_cpp(int K, arma::mat F, arma::mat W,
 arma::vec sample_c2_cpp(int K, int P,
                         arma::mat F, arma::mat W,
                         arma::vec sigma2w, arma::vec prior_c){
-  arma::vec c2 = arma::zeros<arma::vec>(K);
-  arma::rowvec sum_F = sum(F,0);
-  arma::rowvec sum_W2 = sum(W%W%(1-F), 0); // colsum
+  vec c2 = zeros<vec>(K);
+  rowvec sum_F = sum(F,0);
+  rowvec sum_W2 = sum(W%W%(1-F), 0); // colsum
   double a,b;
   for (int k=0; k<K; k++) {
     a = prior_c(0) + (P-sum_F(k))/2.0;
@@ -294,9 +292,9 @@ arma::vec sample_c2_cpp(int K, int P,
 // [[Rcpp::export]]
 arma::vec sample_sigma_b2_cpp(int M, arma::mat Gamma, arma::mat beta,
                               arma::vec prior_sigma2b){
-  arma::vec sigma_b2_vec = arma::zeros<arma::vec>(M);
-  arma::colvec sum_beta2 = sum(beta%beta,1); // rowsum
-  arma::colvec sum_Gamma = sum(Gamma,1);
+  vec sigma_b2_vec = zeros<vec>(M);
+  colvec sum_beta2 = sum(beta%beta,1); // rowsum
+  colvec sum_Gamma = sum(Gamma,1);
   double a,b;
   for (int m=0; m<M; m++) {
     a = prior_sigma2b(0) + sum_Gamma(m)/2.0;
@@ -311,15 +309,15 @@ arma::vec sample_sigma_b2_cpp(int M, arma::mat Gamma, arma::mat beta,
 List initialize_random(int K, arma::mat Y){
   Rprintf("Initializing Z and W with random values.\n");
   int P = Y.n_cols;
-  arma::mat init_U = arma::randn(P,K);
+  mat init_U = randn(P,K);
   init_U = init_U * 2.0;
 
-  arma::vec tmp = Rcpp::rbinom(P*K,1,0.1);
-  arma::mat init_F = arma::mat(tmp);
+  vec tmp = Rcpp::rbinom(P*K,1,0.1);
+  mat init_F = mat(tmp);
   init_F.reshape(P,K);
 
-  arma::mat init_W = init_F % init_U;
-  arma::mat init_Z = Y * init_W * inv(init_W.t()*init_W);
+  mat init_W = init_F % init_U;
+  mat init_Z = Y * init_W * inv(init_W.t()*init_W);
   return List::create(Named("W") = init_W, Named("F") = init_F, Named("Z") = init_Z);
 }
 
@@ -327,9 +325,9 @@ List initialize_random(int K, arma::mat Y){
 // [[Rcpp::export]]
 List initialize_svd(int K, arma::mat Y){
   Rprintf("Initializing Z and W with SVD.\n");
-  arma::mat svd_U;
-  arma::vec d_vec;
-  arma::mat svd_V;
+  mat svd_U;
+  vec d_vec;
+  mat svd_V;
   bool SVDsuccess = false;
   while(SVDsuccess == false) {
     SVDsuccess = svd(svd_U, d_vec, svd_V, Y);
@@ -337,16 +335,16 @@ List initialize_svd(int K, arma::mat Y){
       Y += 1e-4;
     }
   }
-  arma::mat matd = arma::zeros<arma::mat>(K, K);
-  matd.diag() = sqrt(d_vec(arma::span(0, K-1)));
-  arma::mat init_Z = svd_U.cols(0, K-1)*matd;
+  mat matd = zeros<mat>(K, K);
+  matd.diag() = sqrt(d_vec(span(0, K-1)));
+  mat init_Z = svd_U.cols(0, K-1)*matd;
   init_Z = (init_Z - mean(vectorise(init_Z))) / stddev(vectorise(init_Z));
-  arma::mat init_U = Y.t() * init_Z * inv(init_Z.t()*init_Z);
+  mat init_U = Y.t() * init_Z * inv(init_Z.t()*init_Z);
   // Impose sparsity on W:
   double threshold = Cquantile(vectorise(abs(init_U)), 0.2);
-  arma::umat init_bool = abs(init_U) > threshold;
-  arma::mat init_F = arma::conv_to<arma::mat>::from(init_bool);
-  arma::mat init_W = init_U % init_F;
+  umat init_bool = abs(init_U) > threshold;
+  mat init_F = conv_to<mat>::from(init_bool);
+  mat init_W = init_U % init_F;
   return List::create(Named("W") = init_W, Named("F") = init_F, Named("Z") = init_Z);
 }
 
@@ -357,27 +355,27 @@ List initialize_given_Z(int K, arma::mat Y, arma::mat init_Z){
   if(K != init_Z.n_cols){
     throw("Number of factors provided in init_Z does not match K!");
   }
-  arma::mat init_U = Y.t() * init_Z * inv(init_Z.t()*init_Z);
+  mat init_U = Y.t() * init_Z * inv(init_Z.t()*init_Z);
   // Impose sparsity on W:
   double threshold = Cquantile(vectorise(abs(init_U)), 0.2);
-  arma::umat init_bool = abs(init_U) > threshold;
-  arma::mat init_F = arma::conv_to<arma::mat>::from(init_bool);
-  arma::mat init_W = init_U % init_F;
+  umat init_bool = abs(init_U) > threshold;
+  mat init_F = conv_to<mat>::from(init_bool);
+  mat init_W = init_U % init_F;
   return List::create(Named("W") = init_W, Named("F") = init_F, Named("Z") = init_Z);
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 List initialize_gammaBeta(int M, int K, arma::mat G, arma::mat Z){
-  arma::mat beta = arma::zeros<arma::mat>(M,K);
-  arma::vec tmp_beta;
+  mat beta = zeros<mat>(M,K);
+  vec tmp_beta;
   for (int m=0; m<M; m++){
-    arma::vec G_col = G.col(m);
-    arma::vec tmp_beta = Z.t() * G_col / (sum(G_col%G_col)+1e-4);
-    beta.row(m) = arma::conv_to< arma::rowvec >::from(tmp_beta);
+    vec G_col = G.col(m);
+    vec tmp_beta = Z.t() * G_col / (sum(G_col%G_col)+1e-4);
+    beta.row(m) = conv_to< rowvec >::from(tmp_beta);
   }
-  arma::umat init_bool = abs(beta) > Cquantile(vectorise(abs(beta)), 0.5);
-  arma::mat Gamma = arma::conv_to< arma::mat >::from(init_bool);
+  umat init_bool = abs(beta) > Cquantile(vectorise(abs(beta)), 0.5);
+  mat Gamma = conv_to< mat >::from(init_bool);
   beta = beta % Gamma;
   return List::create(Named("Gamma") = Gamma, Named("beta") = beta);
 }
@@ -396,44 +394,44 @@ List compute_posterior_mean_cpp(arma::cube Gamma_mtx, arma::cube beta_mtx,
   int M = beta_mtx.n_rows;
   int K = Z_mtx.n_cols;
 
-  arma::mat Gamma_pm = arma::zeros<arma::mat>(M,K);
-  arma::mat beta_pm = arma::zeros<arma::mat>(M,K);
-  arma::vec pi_beta_pm = arma::zeros<arma::vec>(M);
-  arma::mat Z_pm = arma::zeros<arma::mat>(N,K);
-  arma::mat F_pm = arma::zeros<arma::mat>(P,K);
-  arma::mat W_pm = arma::zeros<arma::mat>(P,K);
-  arma::vec pi_pm = arma::zeros<arma::vec>(K);
-  arma::vec sigma_w2_pm = arma::zeros<arma::vec>(K);
-  arma::vec c2_pm = arma::zeros<arma::vec>(K);
+  mat Gamma_pm = zeros<mat>(M,K);
+  mat beta_pm = zeros<mat>(M,K);
+  vec pi_beta_pm = zeros<vec>(M);
+  mat Z_pm = zeros<mat>(N,K);
+  mat F_pm = zeros<mat>(P,K);
+  mat W_pm = zeros<mat>(P,K);
+  vec pi_pm = zeros<vec>(K);
+  vec sigma_w2_pm = zeros<vec>(K);
+  vec c2_pm = zeros<vec>(K);
 
   if (niter >= ave_niter){
     int start_iter = niter-ave_niter+1;
-    arma::cube Gamma_slice = Gamma_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube Gamma_slice = Gamma_mtx(span(0, M-1), span(0, K-1), span(start_iter, niter));
     Gamma_pm = sum(Gamma_slice,2) / ave_niter;
 
-    arma::cube beta_slice = beta_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube beta_slice = beta_mtx(span(0, M-1), span(0, K-1), span(start_iter, niter));
     beta_pm = sum(beta_slice,2) / ave_niter;
 
-    arma::mat pi_beta_slice = pi_beta_mtx(arma::span(0, M-1), arma::span(start_iter, niter));
+    mat pi_beta_slice = pi_beta_mtx(span(0, M-1), span(start_iter, niter));
     pi_beta_pm = sum(pi_beta_slice,1) / ave_niter;
 
-    arma::cube Z_slice = Z_mtx(arma::span(0, N-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube Z_slice = Z_mtx(span(0, N-1), span(0, K-1), span(start_iter, niter));
     Z_pm = sum(Z_slice,2) / ave_niter;
 
-    arma::cube F_slice = F_mtx(arma::span(0, P-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube F_slice = F_mtx(span(0, P-1), span(0, K-1), span(start_iter, niter));
     F_pm = sum(F_slice,2) / ave_niter;
 
-    arma::cube W_slice = W_mtx(arma::span(0, P-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube W_slice = W_mtx(span(0, P-1), span(0, K-1), span(start_iter, niter));
     W_pm = sum(W_slice,2) / ave_niter;
 
-    arma::mat pi_slice = pi_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    mat pi_slice = pi_mtx(span(0, K-1), span(start_iter, niter));
     pi_pm = sum(pi_slice,1) / ave_niter;
 
-    arma::mat sigma_w2_slice = sigma_w2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    mat sigma_w2_slice = sigma_w2_mtx(span(0, K-1), span(start_iter, niter));
     sigma_w2_pm = sum(sigma_w2_slice,1) / ave_niter;
 
     if (prior_type=="mixture_normal") {
-      arma::mat c2_slices = c2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+      mat c2_slices = c2_mtx(span(0, K-1), span(start_iter, niter));
       c2_pm = sum(c2_slices,1) / ave_niter;
     }
   } else {
@@ -489,57 +487,57 @@ List compute_posterior_mean_2groups_cpp(arma::cube Gamma0_mtx, arma::cube beta0_
   int M = beta0_mtx.n_rows;
   int K = Z_mtx.n_cols;
 
-  arma::mat Gamma0_pm = arma::zeros<arma::mat>(M,K);
-  arma::mat beta0_pm = arma::zeros<arma::mat>(M,K);
-  arma::vec pi_beta0_pm = arma::zeros<arma::vec>(M);
+  mat Gamma0_pm = zeros<mat>(M,K);
+  mat beta0_pm = zeros<mat>(M,K);
+  vec pi_beta0_pm = zeros<vec>(M);
 
-  arma::mat Gamma1_pm = arma::zeros<arma::mat>(M,K);
-  arma::mat beta1_pm = arma::zeros<arma::mat>(M,K);
-  arma::vec pi_beta1_pm = arma::zeros<arma::vec>(M);
+  mat Gamma1_pm = zeros<mat>(M,K);
+  mat beta1_pm = zeros<mat>(M,K);
+  vec pi_beta1_pm = zeros<vec>(M);
 
-  arma::mat Z_pm = arma::zeros<arma::mat>(N,K);
-  arma::mat F_pm = arma::zeros<arma::mat>(P,K);
-  arma::mat W_pm = arma::zeros<arma::mat>(P,K);
-  arma::vec pi_pm = arma::zeros<arma::vec>(K);
-  arma::vec sigma_w2_pm = arma::zeros<arma::vec>(K);
-  arma::vec c2_pm = arma::zeros<arma::vec>(K);
+  mat Z_pm = zeros<mat>(N,K);
+  mat F_pm = zeros<mat>(P,K);
+  mat W_pm = zeros<mat>(P,K);
+  vec pi_pm = zeros<vec>(K);
+  vec sigma_w2_pm = zeros<vec>(K);
+  vec c2_pm = zeros<vec>(K);
 
   if (niter >= ave_niter){
     int start_iter = niter-ave_niter+1;
-    arma::cube Gamma0_slice = Gamma0_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube Gamma0_slice = Gamma0_mtx(span(0, M-1), span(0, K-1), span(start_iter, niter));
     Gamma0_pm = sum(Gamma0_slice,2) / ave_niter;
 
-    arma::cube beta0_slice = beta0_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube beta0_slice = beta0_mtx(span(0, M-1), span(0, K-1), span(start_iter, niter));
     beta0_pm = sum(beta0_slice,2) / ave_niter;
 
-    arma::mat pi_beta0_slice = pi_beta0_mtx(arma::span(0, M-1), arma::span(start_iter, niter));
+    mat pi_beta0_slice = pi_beta0_mtx(span(0, M-1), span(start_iter, niter));
     pi_beta0_pm = sum(pi_beta0_slice,1) / ave_niter;
 
-    arma::cube Gamma1_slice = Gamma1_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube Gamma1_slice = Gamma1_mtx(span(0, M-1), span(0, K-1), span(start_iter, niter));
     Gamma1_pm = sum(Gamma1_slice,2) / ave_niter;
 
-    arma::cube beta1_slice = beta1_mtx(arma::span(0, M-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube beta1_slice = beta1_mtx(span(0, M-1), span(0, K-1), span(start_iter, niter));
     beta1_pm = sum(beta1_slice,2) / ave_niter;
 
-    arma::mat pi_beta1_slice = pi_beta1_mtx(arma::span(0, M-1), arma::span(start_iter, niter));
+    mat pi_beta1_slice = pi_beta1_mtx(span(0, M-1), span(start_iter, niter));
     pi_beta1_pm = sum(pi_beta1_slice,1) / ave_niter;
 
-    arma::cube Z_slice = Z_mtx(arma::span(0, N-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube Z_slice = Z_mtx(span(0, N-1), span(0, K-1), span(start_iter, niter));
     Z_pm = sum(Z_slice,2) / ave_niter;
 
-    arma::cube F_slice = F_mtx(arma::span(0, P-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube F_slice = F_mtx(span(0, P-1), span(0, K-1), span(start_iter, niter));
     F_pm = sum(F_slice,2) / ave_niter;
 
-    arma::cube W_slice = W_mtx(arma::span(0, P-1), arma::span(0, K-1), arma::span(start_iter, niter));
+    cube W_slice = W_mtx(span(0, P-1), span(0, K-1), span(start_iter, niter));
     W_pm = sum(W_slice,2) / ave_niter;
 
-    arma::mat pi_slice = pi_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    mat pi_slice = pi_mtx(span(0, K-1), span(start_iter, niter));
     pi_pm = sum(pi_slice,1) / ave_niter;
 
-    arma::mat sigma_w2_slice = sigma_w2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+    mat sigma_w2_slice = sigma_w2_mtx(span(0, K-1), span(start_iter, niter));
     sigma_w2_pm = sum(sigma_w2_slice,1) / ave_niter;
     if (prior_type=="mixture_normal") {
-      arma::mat c2_slices = c2_mtx(arma::span(0, K-1), arma::span(start_iter, niter));
+      mat c2_slices = c2_mtx(span(0, K-1), span(start_iter, niter));
       c2_pm = sum(c2_slices,1) / ave_niter;
     }
   } else {
@@ -593,10 +591,10 @@ arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_m
   int P = W_mtx.n_rows;
   int niter = W_mtx.n_slices;
 
-  arma::mat lfsr_mat = arma::zeros<arma::mat>(P,M);
-  arma::mat beta_m = arma::zeros<arma::mat>(K,niter);
-  arma::mat W_j = arma::zeros<arma::mat>(K,niter);
-  arma::mat F_j = arma::zeros<arma::mat>(K,niter);
+  mat lfsr_mat = zeros<mat>(P,M);
+  mat beta_m = zeros<mat>(K,niter);
+  mat W_j = zeros<mat>(K,niter);
+  mat F_j = zeros<mat>(K,niter);
   for (int m=0; m<M; m++){
     beta_m = beta_mtx.row(m);
     for (int j=0; j<P; j++){
@@ -605,12 +603,12 @@ arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_m
         F_j = F_mtx.row(j);
         W_j = W_j % F_j; // Set W to zero if F=0 under the normal-mixture prior
       }
-      arma::vec bw_prod(use_niter);
+      vec bw_prod(use_niter);
       for (int i=0; i<use_niter; i++){
         int slice_indx = niter-use_niter+i;
         bw_prod(i) = sum(W_j.col(slice_indx) % beta_m.col(slice_indx));
       }
-      arma::vec sign_count(2);
+      vec sign_count(2);
       sign_count(0) = sum(bw_prod <= 0);
       sign_count(1) = sum(bw_prod >= 0);
       lfsr_mat(j,m) = sign_count.min() / double(use_niter);

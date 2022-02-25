@@ -2,6 +2,7 @@
 #include "sampling_functions.h"
 
 using namespace Rcpp;
+using namespace arma;
 
 // FUNCTION DEFINITIONS
 // ---------------------
@@ -43,27 +44,27 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                                    Named("prior_gb") = prior_gb, Named("prior_hb") = prior_hb,
                                    Named("prior_gw") = prior_gw, Named("prior_hw") = prior_hw,
                                    Named("prior_gc") = prior_gc, Named("prior_hc") = prior_hc);
-  arma::vec prior_pi(2);
+  vec prior_pi(2);
   prior_pi(0) = prior_s;
   prior_pi(1) = prior_r;
 
-  arma::vec prior_pibeta(2);
+  vec prior_pibeta(2);
   prior_pibeta(0) = prior_sb;
   prior_pibeta(1) = prior_rb;
 
-  arma::vec prior_psi(2);
+  vec prior_psi(2);
   prior_psi(0) = prior_gp;
   prior_psi(1) = prior_hp;
 
-  arma::vec prior_sigma2b(2);
+  vec prior_sigma2b(2);
   prior_sigma2b(0) = prior_gb;
   prior_sigma2b(1) = prior_hb;
 
-  arma::vec prior_sigma2w(2);
+  vec prior_sigma2w(2);
   prior_sigma2w(0) = prior_gw;
   prior_sigma2w(1) = prior_hw;
 
-  arma::vec prior_c(2);
+  vec prior_c(2);
   prior_c(0) = prior_gc;
   prior_c(1) = prior_hc;
 
@@ -72,23 +73,23 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   int P = Y.n_cols;
   int M = G.n_cols;
 
-  arma::vec pi_vec(K);
+  vec pi_vec(K);
   pi_vec.fill(0.2);
 
-  arma::vec pi_beta(M);
+  vec pi_beta(M);
   pi_beta.fill(0.2);
 
-  arma::vec psi(P);
+  vec psi(P);
   psi.fill(1.0);
 
-  arma::vec sigma_b2(M);
+  vec sigma_b2(M);
   sigma_b2.fill(1.0);
 
-  arma::vec sigma_w2(K);
+  vec sigma_w2(K);
   sigma_w2.fill(1.0);
 
-  arma::vec c2(K, arma::fill::zeros);
-  arma::mat c2_mtx(K,niter+1, arma::fill::zeros);
+  vec c2(K, fill::zeros);
+  mat c2_mtx(K,niter+1, fill::zeros);
   if (prior_type=="mixture_normal") {
     c2.fill(0.25);
     c2_mtx.col(0) = c2;
@@ -104,31 +105,31 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   } else {
     intial_ZFW_params = initialize_random(K,Y);
   }
-  arma::mat Z = as<arma::mat>(intial_ZFW_params["Z"]);
-  arma::mat F = as<arma::mat>(intial_ZFW_params["F"]);
-  arma::mat W = as<arma::mat>(intial_ZFW_params["W"]);
+  mat Z = as<mat>(intial_ZFW_params["Z"]);
+  mat F = as<mat>(intial_ZFW_params["F"]);
+  mat W = as<mat>(intial_ZFW_params["W"]);
 
   List gammaBeta;
   gammaBeta = initialize_gammaBeta(M, K, G, Z);
-  arma::mat Gamma = as<arma::mat>(gammaBeta["Gamma"]);
-  arma::mat beta = as<arma::mat>(gammaBeta["beta"]);
+  mat Gamma = as<mat>(gammaBeta["Gamma"]);
+  mat beta = as<mat>(gammaBeta["beta"]);
 
   // Storing the initial values of parameters as samples at iteration 0:
-  arma::cube Z_mtx = arma::zeros<arma::cube>(N,K,niter+1);
+  cube Z_mtx = zeros<cube>(N,K,niter+1);
   Z_mtx.slice(0) = Z;
-  arma::cube F_mtx = arma::zeros<arma::cube>(P,K,niter+1);
+  cube F_mtx = zeros<cube>(P,K,niter+1);
   F_mtx.slice(0) = F;
-  arma::cube W_mtx = arma::zeros<arma::cube>(P,K,niter+1);
+  cube W_mtx = zeros<cube>(P,K,niter+1);
   W_mtx.slice(0) = W;
-  arma::cube beta_mtx = arma::zeros<arma::cube>(M,K,niter+1);
+  cube beta_mtx = zeros<cube>(M,K,niter+1);
   beta_mtx.slice(0) = beta;
-  arma::cube Gamma_mtx = arma::zeros<arma::cube>(M,K,niter+1);
+  cube Gamma_mtx = zeros<cube>(M,K,niter+1);
   Gamma_mtx.slice(0) = Gamma;
-  arma::mat pi_mtx = arma::zeros<arma::mat>(K,niter+1);
+  mat pi_mtx = zeros<mat>(K,niter+1);
   pi_mtx.col(0) = pi_vec;
-  arma::mat pi_beta_mtx = arma::zeros<arma::mat>(M,niter+1);
+  mat pi_beta_mtx = zeros<mat>(M,niter+1);
   pi_beta_mtx.col(0) = pi_beta;
-  arma::mat sigma_w2_mtx = arma::zeros<arma::mat>(K,niter+1);
+  mat sigma_w2_mtx = zeros<mat>(K,niter+1);
   sigma_w2_mtx.col(0) = sigma_w2;
 
   List FW;
@@ -138,8 +139,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
 
   while (iter <= niter) {
     gammaBeta = sample_gammaBeta_cpp(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta);
-    Gamma = as<arma::mat>(gammaBeta["Gamma"]);
-    beta = as<arma::mat>(gammaBeta["beta"]);
+    Gamma = as<mat>(gammaBeta["Gamma"]);
+    beta = as<mat>(gammaBeta["beta"]);
     pi_beta = sample_pi_beta_cpp(M, K, Gamma, prior_pibeta);
     sigma_b2 = sample_sigma_b2_cpp(M, Gamma, beta, prior_sigma2b);
 
@@ -157,8 +158,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     }
     if (prior_type=="spike_slab") {
       FW = sample_FW_spike_slab_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-      F = as<arma::mat>(FW["F"]);
-      W = as<arma::mat>(FW["W"]);
+      F = as<mat>(FW["F"]);
+      W = as<mat>(FW["W"]);
       pi_vec = sample_pi_cpp(P, K, F, prior_pi);
       sigma_w2 = sample_sigma_w2_spike_slab_cpp(K, F, W, prior_sigma2w);
     }
@@ -181,7 +182,6 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     }
     iter += 1;
   }
-
   // Save the latest updates for future Gibbs sampling to pick up from:
   List update_list;
   update_list = List::create(Named("Z") = Z, Named("F") = F, Named("W") = W,
@@ -199,7 +199,7 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                                        pi_mtx, sigma_w2_mtx, c2_mtx,
                                        niter, ave_niter, prior_type);
   // Compute local false sign rate for each perturbation-gene pair:
-  arma::mat lfsr_mat(P,M);
+  mat lfsr_mat(P,M);
   lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
   if (return_samples) {
     // Save samples at each iteration on top of everything else:
@@ -245,50 +245,50 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
   int K = Z.n_cols;
   int M = G.n_cols;
 
-  arma::vec prior_pi(2);
+  vec prior_pi(2);
   prior_pi(0) = as<double>(prior_params["prior_s"]);
   prior_pi(1) = as<double>(prior_params["prior_r"]);
 
-  arma::vec prior_pibeta(2);
+  vec prior_pibeta(2);
   prior_pibeta(0) = as<double>(prior_params["prior_sb"]);
   prior_pibeta(1) = as<double>(prior_params["prior_rb"]);
 
-  arma::vec prior_psi(2);
+  vec prior_psi(2);
   prior_psi(0) = as<double>(prior_params["prior_gp"]);
   prior_psi(1) = as<double>(prior_params["prior_hp"]);
 
-  arma::vec prior_sigma2w(2);
+  vec prior_sigma2w(2);
   prior_sigma2w(0) = as<double>(prior_params["prior_gw"]);
   prior_sigma2w(1) = as<double>(prior_params["prior_hw"]);
 
-  arma::vec prior_sigma2b(2);
+  vec prior_sigma2b(2);
   prior_sigma2b(0) = as<double>(prior_params["prior_gb"]);
   prior_sigma2b(1) = as<double>(prior_params["prior_hb"]);
 
-  arma::vec prior_c(2);
+  vec prior_c(2);
   prior_c(0) = as<double>(prior_params["prior_gc"]);
   prior_c(1) = as<double>(prior_params["prior_hc"]);
 
-  arma::cube Z_mtx = arma::zeros<arma::cube>(N,K,niter+1);
+  cube Z_mtx = zeros<cube>(N,K,niter+1);
   Z_mtx.slice(0) = Z;
-  arma::cube F_mtx = arma::zeros<arma::cube>(P,K,niter+1);
+  cube F_mtx = zeros<cube>(P,K,niter+1);
   F_mtx.slice(0) = F;
-  arma::cube W_mtx = arma::zeros<arma::cube>(P,K,niter+1);
+  cube W_mtx = zeros<cube>(P,K,niter+1);
   W_mtx.slice(0) = W;
 
-  arma::cube Gamma_mtx = arma::zeros<arma::cube>(M,K,niter+1);
+  cube Gamma_mtx = zeros<cube>(M,K,niter+1);
   Gamma_mtx.slice(0) = Gamma;
-  arma::cube beta_mtx = arma::zeros<arma::cube>(M,K,niter+1);
+  cube beta_mtx = zeros<cube>(M,K,niter+1);
   beta_mtx.slice(0) = beta;
 
-  arma::mat pi_mtx = arma::zeros<arma::mat>(K,niter+1);
+  mat pi_mtx = zeros<mat>(K,niter+1);
   pi_mtx.col(0) = pi_vec;
-  arma::mat pi_beta_mtx = arma::zeros<arma::mat>(M,niter+1);
+  mat pi_beta_mtx = zeros<mat>(M,niter+1);
   pi_beta_mtx.col(0) = pi_beta;
-  arma::mat sigma_w2_mtx = arma::zeros<arma::mat>(K,niter+1);
+  mat sigma_w2_mtx = zeros<mat>(K,niter+1);
   sigma_w2_mtx.col(0) = sigma_w2;
 
-  arma::mat c2_mtx(K,niter+1, arma::fill::zeros);
+  mat c2_mtx(K,niter+1, fill::zeros);
   if (prior_type=="mixture_normal") {
     c2_mtx.col(0) = c2;
   }
@@ -304,8 +304,8 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
 
   while (iter <= niter) {
     gammaBeta = sample_gammaBeta_cpp(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta);
-    Gamma = as<arma::mat>(gammaBeta["Gamma"]);
-    beta = as<arma::mat>(gammaBeta["beta"]);
+    Gamma = as<mat>(gammaBeta["Gamma"]);
+    beta = as<mat>(gammaBeta["beta"]);
     pi_beta = sample_pi_beta_cpp(M, K, Gamma, prior_pibeta);
     sigma_b2 = sample_sigma_b2_cpp(M, Gamma, beta, prior_sigma2b);
 
@@ -323,8 +323,8 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
     }
     if (prior_type=="spike_slab") {
       FW = sample_FW_spike_slab_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-      F = as<arma::mat>(FW["F"]);
-      W = as<arma::mat>(FW["W"]);
+      F = as<mat>(FW["F"]);
+      W = as<mat>(FW["W"]);
       pi_vec = sample_pi_cpp(P, K, F, prior_pi);
       sigma_w2 = sample_sigma_w2_spike_slab_cpp(K, F, W, prior_sigma2w);
     }
@@ -364,7 +364,7 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
                                        pi_mtx, sigma_w2_mtx, c2_mtx,
                                        niter, ave_niter, prior_type);
   // Compute local false sign rate for each perturbation-gene pair:
-  arma::mat lfsr_mat(P,M);
+  mat lfsr_mat(P,M);
   lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
   if (return_samples) {
     // Save samples at each iteration on top of everything else

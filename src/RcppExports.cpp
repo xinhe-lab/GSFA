@@ -142,18 +142,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Cquantile
-double Cquantile(arma::vec x, double q);
-RcppExport SEXP _GSFA_Cquantile(SEXP xSEXP, SEXP qSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
-    rcpp_result_gen = Rcpp::wrap(Cquantile(x, q));
-    return rcpp_result_gen;
-END_RCPP
-}
 // mvrnormArma
 arma::vec mvrnormArma(arma::vec mu, arma::mat sigma);
 RcppExport SEXP _GSFA_mvrnormArma(SEXP muSEXP, SEXP sigmaSEXP) {
@@ -482,7 +470,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_GSFA_restart_gsfa_gibbs_cpp", (DL_FUNC) &_GSFA_restart_gsfa_gibbs_cpp, 20},
     {"_GSFA_gsfa_gibbs_2groups_cpp", (DL_FUNC) &_GSFA_gsfa_gibbs_2groups_cpp, 24},
     {"_GSFA_restart_gibbs_2groups_cpp", (DL_FUNC) &_GSFA_restart_gibbs_2groups_cpp, 25},
-    {"_GSFA_Cquantile", (DL_FUNC) &_GSFA_Cquantile, 2},
     {"_GSFA_mvrnormArma", (DL_FUNC) &_GSFA_mvrnormArma, 2},
     {"_GSFA_sample_Z_cpp", (DL_FUNC) &_GSFA_sample_Z_cpp, 8},
     {"_GSFA_sample_gammaBeta_cpp", (DL_FUNC) &_GSFA_sample_gammaBeta_cpp, 9},

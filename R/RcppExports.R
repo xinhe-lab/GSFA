@@ -17,10 +17,6 @@ restart_gibbs_2groups_cpp <- function(Y, G, group, Z, F, W, Gamma0, Gamma1, beta
     .Call('_GSFA_restart_gibbs_2groups_cpp', PACKAGE = 'GSFA', Y, G, group, Z, F, W, Gamma0, Gamma1, beta0, beta1, pi_vec, pi_beta0, pi_beta1, psi, sigma_w2, sigma_b20, sigma_b21, c2, prior_params, prior_type, niter, ave_niter, lfsr_niter, verbose, return_samples)
 }
 
-Cquantile <- function(x, q) {
-    .Call('_GSFA_Cquantile', PACKAGE = 'GSFA', x, q)
-}
-
 mvrnormArma <- function(mu, sigma) {
     .Call('_GSFA_mvrnormArma', PACKAGE = 'GSFA', mu, sigma)
 }

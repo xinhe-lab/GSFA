@@ -5,8 +5,6 @@
 
 // FUNCTION DECLARATIONS
 // ---------------------
-double Cquantile(arma::vec x, double q);
-
 arma::vec mvrnormArma(arma::vec mu, arma::mat sigma);
 
 arma::mat sample_Z_cpp(int N, int K,
