@@ -2,8 +2,16 @@
 
 using namespace Rcpp;
 
+// FUNCTION DECLARATIONS
+// ---------------------
+void move_seed_rbinom();
+
 // FUNCTION DEFINITIONS
 // ---------------------
+
+void move_seed_rbinom(){
+  double tmp = R::rbinom(1, 0.5);
+}
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
@@ -20,7 +28,7 @@ arma::vec mvrnormArma(arma::vec mu, arma::mat sigma) {
   int ncols = sigma.n_cols;
   arma::vec randvec = arma::randn(ncols);
   arma::mat decomp_mat = arma::chol(sigma);
-  return mu +  decomp_mat.t() * randvec;
+  return mu + decomp_mat.t() * randvec;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -69,9 +77,18 @@ List sample_gammaBeta_cpp(int N, int M, int K,
       log_qgamma(m,k) = std::log(L(m,k)/sigma_b2(m)) / 2 +
         mu(m,k) * mu(m,k) / (L(m,k) * 2) +
         std::log(pi_beta(m)) - std::log(1-pi_beta(m));
-      double qgamma = 1.0 / (std::exp(-log_qgamma(m,k)) + 1);
+      if (log_qgamma(m,k) > 30){
+        Gamma(m,k) = 1;
+        // R::rbinom(1, p) does not perform sampling and move the random seed
+        // forward when p > 1-E-17 (the exact boundary depends on the machine)
+        // Need to manually add a rbinom sampling step to move the random
+        // seed along and ensure reproducibility
+        move_seed_rbinom();
+      } else {
+        double qgamma = 1.0 / (std::exp(-log_qgamma(m,k)) + 1);
+        Gamma(m,k) = R::rbinom(1, qgamma);
+      }
 
-      Gamma(m,k) = R::rbinom(1, qgamma);
       if (Gamma(m,k) == 1){
         beta(m,k) = R::rnorm(mu(m,k), sqrt(L(m,k)));
       } else {
@@ -112,15 +129,24 @@ arma::mat sample_W_cpp(int P, int K,
 arma::mat sample_F_cpp(int P, int K,
                        arma::mat W, arma::vec pi_vec,
                        arma::vec sigma_w2, arma::vec c2){
+  double log_ratio;
+  double ratio;
   arma::mat F = arma::zeros<arma::mat>(P,K);
   for (int j=0; j<P; j++) {
     for (int k=0; k<K; k++) {
-      double ratio = pi_vec(k) / (1-pi_vec(k)) * sqrt(c2(k)) *
-        arma::trunc_exp(pow(W(j,k), 2)/(2*sigma_w2(k)) * (1.0/c2(k) - 1));
-      if (arma::is_finite(ratio)){
-        F(j,k) = R::rbinom(1, ratio/(1+ratio));
-      } else {
+      log_ratio = std::log(pi_vec(k)) - std::log(1-pi_vec(k)) +
+        std::log(c2(k)) / 2. +
+        pow(W(j,k), 2)/(2*sigma_w2(k)) * (1.0/c2(k) - 1);
+      if (log_ratio > 30){
         F(j,k) = 1;
+        // R::rbinom(1, p) does not perform sampling and move the random seed
+        // forward when p > 1-E-17 (the exact boundary depends on the machine)
+        // Need to manually add a rbinom sampling step to move the random
+        // seed along and ensure reproducibility
+        move_seed_rbinom();
+      } else {
+        ratio = 1.0 / (std::exp(-log_ratio) + 1);
+        F(j,k) = R::rbinom(1, ratio);
       }
     }
   }
