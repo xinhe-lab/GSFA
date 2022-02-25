@@ -37,7 +37,39 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
                             double prior_gc=3, double prior_hc=0.5,
                             int niter=500, int ave_niter=200, int lfsr_niter=200,
                             bool verbose=true, bool return_samples=true){
-  // Initialization
+  // Organizing specified hyperparameters:
+  List prior_params = List::create(Named("prior_s") = prior_s, Named("prior_r") = prior_r,
+                                   Named("prior_sb") = prior_sb, Named("prior_rb") = prior_rb,
+                                   Named("prior_gp") = prior_gp, Named("prior_hp") = prior_hp,
+                                   Named("prior_gb") = prior_gb, Named("prior_hb") = prior_hb,
+                                   Named("prior_gw") = prior_gw, Named("prior_hw") = prior_hw,
+                                   Named("prior_gc") = prior_gc, Named("prior_hc") = prior_hc);
+
+  arma::vec prior_pi(2);
+  prior_pi(0) = prior_s;
+  prior_pi(1) = prior_r;
+
+  arma::vec prior_pibeta(2);
+  prior_pibeta(0) = prior_sb;
+  prior_pibeta(1) = prior_rb;
+
+  arma::vec prior_psi(2);
+  prior_psi(0) = prior_gp;
+  prior_psi(1) = prior_hp;
+
+  arma::vec prior_sigma2b(2);
+  prior_sigma2b(0) = prior_gb;
+  prior_sigma2b(1) = prior_hb;
+
+  arma::vec prior_sigma2w(2);
+  prior_sigma2w(0) = prior_gw;
+  prior_sigma2w(1) = prior_hw;
+
+  arma::vec prior_c(2);
+  prior_c(0) = prior_gc;
+  prior_c(1) = prior_hc;
+
+  // Initialization:
   int N = Y.n_rows;
   int P = Y.n_cols;
   int M = G.n_cols;
@@ -52,77 +84,46 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
   arma::mat G0 = G.rows(index0);
   arma::mat G1 = G.rows(index1);
 
-  List prior_params = List::create(Named("prior_s") = prior_s, Named("prior_r") = prior_r,
-                                   Named("prior_sb") = prior_sb, Named("prior_rb") = prior_rb,
-                                   Named("prior_gp") = prior_gp, Named("prior_hp") = prior_hp,
-                                   Named("prior_gb") = prior_gb, Named("prior_hb") = prior_hb,
-                                   Named("prior_gw") = prior_gw, Named("prior_hw") = prior_hw,
-                                   Named("prior_gc") = prior_gc, Named("prior_hc") = prior_hc);
-
-  arma::vec prior_pi(2);
-  prior_pi(0) = prior_s;
-  prior_pi(1) = prior_r;
   arma::vec pi_vec(K);
   pi_vec.fill(0.2);
 
-  arma::vec prior_pibeta(2);
-  prior_pibeta(0) = prior_sb;
-  prior_pibeta(1) = prior_rb;
   arma::vec pi_beta0(M);
   pi_beta0.fill(0.2);
   arma::vec pi_beta1(M);
   pi_beta1.fill(0.2);
 
-  arma::vec prior_psi(2);
-  prior_psi(0) = prior_gp;
-  prior_psi(1) = prior_hp;
   arma::vec psi(P);
   psi.fill(1.0);
 
-  arma::vec prior_sigma2b(2);
-  prior_sigma2b(0) = prior_gb;
-  prior_sigma2b(1) = prior_hb;
   arma::vec sigma_b20(M);
   sigma_b20.fill(1.0);
   arma::vec sigma_b21(M);
   sigma_b21.fill(1.0);
 
-  arma::vec prior_sigma2w(2);
-  prior_sigma2w(0) = prior_gw;
-  prior_sigma2w(1) = prior_hw;
   arma::vec sigma_w2(K);
   sigma_w2.fill(1.0);
 
-  arma::vec prior_c(2);
-  prior_c(0) = prior_gc;
-  prior_c(1) = prior_hc;
-
-  arma::mat Z, F, W;
-  List intial_params;
-  if (initialize == "given"){
-    if (Z_given.isNull()){
-      throw("No initial value of Z provided!");
-    } else {
-      Rprintf("Initializing with given Z.");
-      arma::mat init_Z = Rcpp::as<arma::mat>(Z_given);
-      intial_params = initialize_given_Z(K,Y,init_Z);
-    }
-  } else if (initialize == "svd"){
-    if (Z_given.isNotNull()){
-      warning("Provided value of Z ignored, initializing using truncated SVD!");
-    }
-    Rprintf("Initializing with SVD.");
-    intial_params = initialize_svd(K,Y);
-  } else {
-    if (Z_given.isNotNull()){
-      warning("Provided value of Z ignored, initializing using random values!");
-    }
-    Rprintf("Initializing with random values.");
-    intial_params = initialize_random(K,Y);
+  arma::vec c2(K, arma::fill::zeros);
+  arma::mat c2_mtx(K, niter+1, arma::fill::zeros);
+  if (prior_type=="mixture_normal") {
+    c2.fill(0.25);
+    c2_mtx.col(0) = c2;
   }
-  Z = as<arma::mat>(intial_params["Z"]);
-  F = as<arma::mat>(intial_params["F"]);
-  W = as<arma::mat>(intial_params["W"]);
+  if (prior_type=="spike_slab") {
+    c2.fill(R_NaN);
+    c2_mtx.fill(R_NaN);
+  }
+
+  List intial_ZFW_params;
+  if (initialize=="svd"){
+    intial_ZFW_params = initialize_svd(K,Y);
+  } else {
+    intial_ZFW_params = initialize_random(K,Y);
+  }
+  arma::mat Z = as<arma::mat>(intial_ZFW_params["Z"]);
+  arma::mat F = as<arma::mat>(intial_ZFW_params["F"]);
+  arma::mat W = as<arma::mat>(intial_ZFW_params["W"]);
+
   arma::mat Z0 = Z.rows(index0);
   arma::mat Z1 = Z.rows(index1);
 
@@ -136,6 +137,7 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
   arma::mat Gamma1 = as<arma::mat>(gammaBeta1["Gamma"]);
   arma::mat beta1 = as<arma::mat>(gammaBeta1["beta"]);
 
+  // Storing the initial values of parameters as samples at iteration 0:
   arma::cube Z_mtx = arma::zeros<arma::cube>(N,K,niter+1);
   Z_mtx.slice(0) = Z;
   arma::cube F_mtx = arma::zeros<arma::cube>(P,K,niter+1);
@@ -161,17 +163,6 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
   pi_mtx.col(0) = pi_vec;
   arma::mat sigma_w2_mtx = arma::zeros<arma::mat>(K,niter+1);
   sigma_w2_mtx.col(0) = sigma_w2;
-
-  arma::vec c2(K, arma::fill::zeros);
-  arma::mat c2_mtx(K, niter+1, arma::fill::zeros);
-  if (prior_type=="mixture_normal") {
-    c2.fill(0.25);
-    c2_mtx.col(0) = c2;
-  }
-  if (prior_type=="spike_slab") {
-    c2.fill(R_NaN);
-    c2_mtx.fill(R_NaN);
-  }
 
   // Gibbs Sampling:
   List FW;
@@ -212,7 +203,7 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
       sigma_w2 = sample_sigma_w2_spike_slab_cpp(K, F, W, prior_sigma2w);
     }
 
-    // Store samples through iterations:
+    // Storing samples throughout iterations:
     Gamma0_mtx.slice(iter) = Gamma0;
     beta0_mtx.slice(iter) = beta0;
     pi_beta0_mtx.col(iter) = pi_beta0;
@@ -235,7 +226,7 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
     }
     iter += 1;
   }
-  // Save the latest updates in a list:
+  // Save the latest updates for future Gibbs sampling to pick up from:
   List update_list;
   update_list = List::create(Named("Z") = Z, Named("F") = F, Named("W") = W,
                              Named("Gamma0") = Gamma0, Named("Gamma1") = Gamma1,
@@ -254,13 +245,14 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
                                                Z_mtx, F_mtx, W_mtx, pi_mtx,
                                                sigma_w2_mtx, c2_mtx,
                                                niter, ave_niter, prior_type);
-  // Compute local false sign rate for each guide-gene pair and each of the sample groups:
+  // Compute local false sign rate for each perturbation-gene pair and each of the sample groups:
   arma::mat lfsr0_mat(P,M);
   lfsr0_mat = compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
   arma::mat lfsr1_mat(P,M);
   lfsr1_mat = compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
 
   if (return_samples) {
+    // Save samples at each iteration on top of everything else:
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr0") = lfsr0_mat,
@@ -381,7 +373,6 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
     c2_mtx.fill(R_NaN);
   }
 
-
   // Gibbs Sampling:
   arma::mat Z0 = Z.rows(index0);
   arma::mat Z1 = Z.rows(index1);
@@ -415,7 +406,7 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
     sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
     c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
 
-    // Store samples through iterations:
+    // Store samples throughout iterations:
     Gamma0_mtx.slice(iter) = Gamma0;
     beta0_mtx.slice(iter) = beta0;
     pi_beta0_mtx.col(iter) = pi_beta0;
@@ -459,13 +450,14 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
                                                Z_mtx, F_mtx, W_mtx, pi_mtx,
                                                sigma_w2_mtx, c2_mtx,
                                                niter, ave_niter, prior_type);
-  // Compute local false sign rate for each guide-gene pair and each of the sample groups:
+  // Compute local false sign rate for each perturbation-gene pair and each of the sample groups:
   arma::mat lfsr0_mat(P,M);
   lfsr0_mat = compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
   arma::mat lfsr1_mat(P,M);
   lfsr1_mat = compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
 
   if (return_samples) {
+    // Save samples at each iteration on top of everything else
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr0") = lfsr0_mat,

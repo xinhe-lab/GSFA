@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // gsfa_gibbs_cpp
-List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K, String prior_type, String initialize, Rcpp::Nullable<Rcpp::NumericMatrix> Z_given, double prior_s, double prior_r, double prior_sb, double prior_rb, double prior_gp, double prior_hp, double prior_gb, double prior_hb, double prior_gw, double prior_hw, double prior_gc, double prior_hc, int niter, int ave_niter, int lfsr_niter, bool verbose, bool return_samples);
-RcppExport SEXP _GSFA_gsfa_gibbs_cpp(SEXP YSEXP, SEXP GSEXP, SEXP KSEXP, SEXP prior_typeSEXP, SEXP initializeSEXP, SEXP Z_givenSEXP, SEXP prior_sSEXP, SEXP prior_rSEXP, SEXP prior_sbSEXP, SEXP prior_rbSEXP, SEXP prior_gpSEXP, SEXP prior_hpSEXP, SEXP prior_gbSEXP, SEXP prior_hbSEXP, SEXP prior_gwSEXP, SEXP prior_hwSEXP, SEXP prior_gcSEXP, SEXP prior_hcSEXP, SEXP niterSEXP, SEXP ave_niterSEXP, SEXP lfsr_niterSEXP, SEXP verboseSEXP, SEXP return_samplesSEXP) {
+List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K, String prior_type, String initialize, double prior_s, double prior_r, double prior_sb, double prior_rb, double prior_gp, double prior_hp, double prior_gb, double prior_hb, double prior_gw, double prior_hw, double prior_gc, double prior_hc, int niter, int ave_niter, int lfsr_niter, bool verbose, bool return_samples);
+RcppExport SEXP _GSFA_gsfa_gibbs_cpp(SEXP YSEXP, SEXP GSEXP, SEXP KSEXP, SEXP prior_typeSEXP, SEXP initializeSEXP, SEXP prior_sSEXP, SEXP prior_rSEXP, SEXP prior_sbSEXP, SEXP prior_rbSEXP, SEXP prior_gpSEXP, SEXP prior_hpSEXP, SEXP prior_gbSEXP, SEXP prior_hbSEXP, SEXP prior_gwSEXP, SEXP prior_hwSEXP, SEXP prior_gcSEXP, SEXP prior_hcSEXP, SEXP niterSEXP, SEXP ave_niterSEXP, SEXP lfsr_niterSEXP, SEXP verboseSEXP, SEXP return_samplesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,7 +22,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     Rcpp::traits::input_parameter< String >::type prior_type(prior_typeSEXP);
     Rcpp::traits::input_parameter< String >::type initialize(initializeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type Z_given(Z_givenSEXP);
     Rcpp::traits::input_parameter< double >::type prior_s(prior_sSEXP);
     Rcpp::traits::input_parameter< double >::type prior_r(prior_rSEXP);
     Rcpp::traits::input_parameter< double >::type prior_sb(prior_sbSEXP);
@@ -40,7 +39,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type lfsr_niter(lfsr_niterSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< bool >::type return_samples(return_samplesSEXP);
-    rcpp_result_gen = Rcpp::wrap(gsfa_gibbs_cpp(Y, G, K, prior_type, initialize, Z_given, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples));
+    rcpp_result_gen = Rcpp::wrap(gsfa_gibbs_cpp(Y, G, K, prior_type, initialize, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -479,7 +478,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_GSFA_gsfa_gibbs_cpp", (DL_FUNC) &_GSFA_gsfa_gibbs_cpp, 23},
+    {"_GSFA_gsfa_gibbs_cpp", (DL_FUNC) &_GSFA_gsfa_gibbs_cpp, 22},
     {"_GSFA_restart_gsfa_gibbs_cpp", (DL_FUNC) &_GSFA_restart_gsfa_gibbs_cpp, 20},
     {"_GSFA_gsfa_gibbs_2groups_cpp", (DL_FUNC) &_GSFA_gsfa_gibbs_2groups_cpp, 24},
     {"_GSFA_restart_gibbs_2groups_cpp", (DL_FUNC) &_GSFA_restart_gibbs_2groups_cpp, 25},

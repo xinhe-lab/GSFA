@@ -1,6 +1,7 @@
 #include "sampling_functions.h"
 
 using namespace Rcpp;
+using namespace arma;
 
 // FUNCTION DECLARATIONS
 // ---------------------
@@ -16,7 +17,7 @@ void move_seed_rbinom(){
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 double Cquantile(arma::vec x, double q) {
-  arma::vec y = x;
+  vec y = x;
   y = sort(y);
   return y(floor(x.n_elem * q));
 }
@@ -36,7 +37,7 @@ arma::vec mvrnormArma(arma::vec mu, arma::mat sigma) {
 arma::mat sample_Z_cpp(int N,int K,
                        arma::mat Y, arma::mat F, arma::mat W,
                        arma::mat G, arma::mat beta, arma::vec psi){
-  arma::mat Z = arma::zeros<arma::mat>(N,K);
+  mat Z = arma::zeros<arma::mat>(N,K);
   arma::mat Psi_inv = diagmat(1/psi); // 1/(psi_x_vector+0.000001) when necessary
   arma::vec I(K);
   I.ones();
@@ -60,7 +61,8 @@ List sample_gammaBeta_cpp(int N, int M, int K,
                           arma::mat Z, arma::mat G,
                           arma::mat Gamma, arma::mat beta,
                           arma::vec sigma_b2, arma::vec pi_beta){
-  arma::mat log_qgamma = arma::zeros<arma::mat>(M,K);
+  double log_qgamma;
+  double qgamma;
   arma::mat mu = arma::zeros<arma::mat>(M,K);
   arma::mat L = arma::zeros<arma::mat>(M,K);
   arma::rowvec sum_G2 = sum(square(G),0);
@@ -74,10 +76,10 @@ List sample_gammaBeta_cpp(int N, int M, int K,
       }
       mu(m,k) = L(m,k) * sum_RG;
 
-      log_qgamma(m,k) = std::log(L(m,k)/sigma_b2(m)) / 2 +
+      log_qgamma = std::log(L(m,k)/sigma_b2(m)) / 2 +
         mu(m,k) * mu(m,k) / (L(m,k) * 2) +
         std::log(pi_beta(m)) - std::log(1-pi_beta(m));
-      if (log_qgamma(m,k) > 30){
+      if (log_qgamma > 30){
         Gamma(m,k) = 1;
         // R::rbinom(1, p) does not perform sampling and move the random seed
         // forward when p > 1-E-17 (the exact boundary depends on the machine)
@@ -85,7 +87,7 @@ List sample_gammaBeta_cpp(int N, int M, int K,
         // seed along and ensure reproducibility
         move_seed_rbinom();
       } else {
-        double qgamma = 1.0 / (std::exp(-log_qgamma(m,k)) + 1);
+        qgamma = 1.0 / (std::exp(-log_qgamma) + 1);
         Gamma(m,k) = R::rbinom(1, qgamma);
       }
 
@@ -307,6 +309,7 @@ arma::vec sample_sigma_b2_cpp(int M, arma::mat Gamma, arma::mat beta,
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 List initialize_random(int K, arma::mat Y){
+  Rprintf("Initializing Z and W with random values.\n");
   int P = Y.n_cols;
   arma::mat init_U = arma::randn(P,K);
   init_U = init_U * 2.0;
@@ -323,6 +326,7 @@ List initialize_random(int K, arma::mat Y){
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 List initialize_svd(int K, arma::mat Y){
+  Rprintf("Initializing Z and W with SVD.\n");
   arma::mat svd_U;
   arma::vec d_vec;
   arma::mat svd_V;
@@ -349,6 +353,7 @@ List initialize_svd(int K, arma::mat Y){
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 List initialize_given_Z(int K, arma::mat Y, arma::mat init_Z){
+  Rprintf("Initializing Z and W with user provided Z.\n");
   if(K != init_Z.n_cols){
     throw("Number of factors provided in init_Z does not match K!");
   }
