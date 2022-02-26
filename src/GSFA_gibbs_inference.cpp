@@ -13,9 +13,10 @@ using namespace arma;
 //' @param Y sample by gene numeric matrix
 //' @param G sample by perturbation numeric matrix
 //' @param K number of factors to infer in the model
-//' @param prior_type character value indicating which prior to use on gene weights, recommend
-//' to use the default "mixture_normal" (mixture-of-normals),
-//' but "spike_slab" (spike-and-slab) is also an option, but is sometimes insufficient to impose sparsity
+//' @param prior_type character value indicating which prior to use on gene weights,
+//' recommend to use the default "mixture_normal" (normal-mixture prior);
+//' "spike_slab" (spike-and-slab prior) is also an option,
+//' but it is sometimes insufficient to impose sparsity based on experience
 //' @param initialize character value indicating which initialization method to use, can be one of
 //' "svd", "random", or "given"
 //' @param niter a numeric value indicating the total number of iterations Gibbs sampling should last
@@ -69,9 +70,9 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   prior_c(1) = prior_hc;
 
   // Initialization:
-  int N = Y.n_rows;
-  int P = Y.n_cols;
-  int M = G.n_cols;
+  int N = Y.n_rows; // get sample size
+  int P = Y.n_cols; // get gene size
+  int M = G.n_cols; // get perturbation size
 
   vec pi_vec(K);
   pi_vec.fill(0.2);
@@ -99,20 +100,18 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     c2_mtx.fill(R_NaN);
   }
 
-  List intial_ZFW_params;
+  mat Z = zeros<mat>(N,K);
+  mat F = zeros<mat>(P,K);
+  mat W = zeros<mat>(P,K);
   if (initialize=="svd"){
-    intial_ZFW_params = initialize_svd(K,Y);
+    initialize_svd(K, Y, Z, F, W);
   } else {
-    intial_ZFW_params = initialize_random(K,Y);
+    initialize_random(K, Y, Z, F, W);
   }
-  mat Z = as<mat>(intial_ZFW_params["Z"]);
-  mat F = as<mat>(intial_ZFW_params["F"]);
-  mat W = as<mat>(intial_ZFW_params["W"]);
 
-  List gammaBeta;
-  gammaBeta = initialize_gammaBeta(M, K, G, Z);
-  mat Gamma = as<mat>(gammaBeta["Gamma"]);
-  mat beta = as<mat>(gammaBeta["beta"]);
+  mat beta = zeros<mat>(M,K);
+  mat Gamma = zeros<mat>(M,K);
+  initialize_GammaBeta(M, K, G, Z, beta, Gamma);
 
   // Storing the initial values of parameters as samples at iteration 0:
   cube Z_mtx = zeros<cube>(N,K,niter+1);
@@ -132,36 +131,31 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   mat sigma_w2_mtx = zeros<mat>(K,niter+1);
   sigma_w2_mtx.col(0) = sigma_w2;
 
-  List FW;
-
   // Gibbs Sampling:
   int iter = 1;
 
   while (iter <= niter) {
-    gammaBeta = sample_gammaBeta_cpp(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta);
-    Gamma = as<mat>(gammaBeta["Gamma"]);
-    beta = as<mat>(gammaBeta["beta"]);
-    pi_beta = sample_pi_beta_cpp(M, K, Gamma, prior_pibeta);
-    sigma_b2 = sample_sigma_b2_cpp(M, Gamma, beta, prior_sigma2b);
 
-    Z = sample_Z_cpp(N,K,Y,F,W,G,beta,psi);
-    psi = sample_psi_cpp(N,P,Y,Z,F,W,prior_psi);
+    sample_GammaBeta(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta);
+    sample_pi_beta(M, K, Gamma, prior_pibeta, pi_beta);
+    sample_sigma_b2(M, Gamma, beta, prior_sigma2b, sigma_b2);
+
+    sample_Z(N, K, Y, F, W, G, beta, psi, Z);
+    sample_psi(N, P, Y, Z, F, W, prior_psi, psi);
 
     if (prior_type=="mixture_normal") {
-      W = sample_W_cpp(P, K, Y, Z, F, W, psi, sigma_w2, c2);
-      F = sample_F_cpp(P, K, W, pi_vec, sigma_w2, c2);
-      pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-      sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
-      c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
+      sample_W(P, K, Y, Z, F, W, psi, sigma_w2, c2);
+      sample_F(P, K, W, F, pi_vec, sigma_w2, c2);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2(K, P, F, W, prior_sigma2w, c2, sigma_w2);
+      sample_c2(K, P, F, W, sigma_w2, prior_c, c2);
 
       c2_mtx.col(iter) = c2;
     }
     if (prior_type=="spike_slab") {
-      FW = sample_FW_spike_slab_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-      F = as<mat>(FW["F"]);
-      W = as<mat>(FW["W"]);
-      pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-      sigma_w2 = sample_sigma_w2_spike_slab_cpp(K, F, W, prior_sigma2w);
+      sample_FW_spike_slab(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2_spike_slab(K, F, W, prior_sigma2w, sigma_w2);
     }
 
     // Storing samples throughout iterations:
@@ -201,6 +195,9 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   // Compute local false sign rate for each perturbation-gene pair:
   mat lfsr_mat(P,M);
   lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+
+  // CONSTRUCT OUTPUT
+  // ----------------------------------------------------------
   if (return_samples) {
     // Save samples at each iteration on top of everything else:
     return List::create(Named("updates") = update_list,
@@ -297,37 +294,31 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
   }
 
   // Gibbs Sampling:
-  List gammaBeta;
-  List FW;
-
   int iter = 1;
 
   while (iter <= niter) {
-    gammaBeta = sample_gammaBeta_cpp(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta);
-    Gamma = as<mat>(gammaBeta["Gamma"]);
-    beta = as<mat>(gammaBeta["beta"]);
-    pi_beta = sample_pi_beta_cpp(M, K, Gamma, prior_pibeta);
-    sigma_b2 = sample_sigma_b2_cpp(M, Gamma, beta, prior_sigma2b);
+    sample_GammaBeta(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta);
+    sample_pi_beta(M, K, Gamma, prior_pibeta, pi_beta);
+    sample_sigma_b2(M, Gamma, beta, prior_sigma2b, sigma_b2);
 
-    Z = sample_Z_cpp(N,K,Y,F,W,G,beta,psi);
-    psi = sample_psi_cpp(N,P,Y,Z,F,W,prior_psi);
+    sample_Z(N, K, Y, F, W, G, beta, psi, Z);
+    sample_psi(N, P, Y, Z, F, W, prior_psi, psi);
 
     if (prior_type=="mixture_normal") {
-      W = sample_W_cpp(P, K, Y, Z, F, W, psi, sigma_w2, c2);
-      F = sample_F_cpp(P, K, W, pi_vec, sigma_w2, c2);
-      pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-      sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
-      c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
+      sample_W(P, K, Y, Z, F, W, psi, sigma_w2, c2);
+      sample_F(P, K, W, F, pi_vec, sigma_w2, c2);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2(K, P, F, W, prior_sigma2w, c2, sigma_w2);
+      sample_c2(K, P, F, W, sigma_w2, prior_c, c2);
 
       c2_mtx.col(iter) = c2;
     }
     if (prior_type=="spike_slab") {
-      FW = sample_FW_spike_slab_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-      F = as<mat>(FW["F"]);
-      W = as<mat>(FW["W"]);
-      pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-      sigma_w2 = sample_sigma_w2_spike_slab_cpp(K, F, W, prior_sigma2w);
+      sample_FW_spike_slab(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2_spike_slab(K, F, W, prior_sigma2w, sigma_w2);
     }
+
     // Store samples throughout iterations:
     Gamma_mtx.slice(iter) = Gamma;
     beta_mtx.slice(iter) = beta;
@@ -366,6 +357,9 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
   // Compute local false sign rate for each perturbation-gene pair:
   mat lfsr_mat(P,M);
   lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+
+  // CONSTRUCT OUTPUT
+  // ----------------------------------------------------------
   if (return_samples) {
     // Save samples at each iteration on top of everything else
     return List::create(Named("updates") = update_list,

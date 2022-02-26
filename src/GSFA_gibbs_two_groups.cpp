@@ -115,16 +115,14 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
     c2_mtx.fill(R_NaN);
   }
 
-  List intial_ZFW_params;
+  mat Z = zeros<mat>(N,K);
+  mat F = zeros<mat>(P,K);
+  mat W = zeros<mat>(P,K);
   if (initialize=="svd"){
-    intial_ZFW_params = initialize_svd(K,Y);
+    initialize_svd(K, Y, Z, F, W);
   } else {
-    intial_ZFW_params = initialize_random(K,Y);
+    initialize_random(K, Y, Z, F, W);
   }
-  mat Z = as<mat>(intial_ZFW_params["Z"]);
-  mat F = as<mat>(intial_ZFW_params["F"]);
-  mat W = as<mat>(intial_ZFW_params["W"]);
-
   mat Z0 = Z.rows(index0);
   mat Z1 = Z.rows(index1);
 
@@ -252,6 +250,8 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
   mat lfsr1_mat(P,M);
   lfsr1_mat = compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
 
+  // CONSTRUCT OUTPUT
+  // ----------------------------------------------------------
   if (return_samples) {
     // Save samples at each iteration on top of everything else:
     return List::create(Named("updates") = update_list,
@@ -457,6 +457,8 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
   mat lfsr1_mat(P,M);
   lfsr1_mat = compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
 
+  // CONSTRUCT OUTPUT
+  // ----------------------------------------------------------
   if (return_samples) {
     // Save samples at each iteration on top of everything else
     return List::create(Named("updates") = update_list,
