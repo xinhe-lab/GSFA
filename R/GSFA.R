@@ -9,16 +9,18 @@
 #' length or nrow of \code{G} should be the same as \code{nrow(Y)};
 #' @param K Number of factors to use in the model; only one of \code{K}
 #' and \code{fit0} is needed;
-#' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous \code{fit_gsfa_multivar}
-#' run, so that more iterations of Gibbs sampling can be carried out on top of it;
-#' only one of \code{K} and \code{fit0} is needed;
+#' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous
+#' \code{fit_gsfa_multivar} run, so that more iterations of Gibbs sampling
+#' can continue from the last updates in it;
 #' @param prior_type Type of sparse prior used on gene weights, can be "mixture_normal"
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
 #' @param init.method Method to initialize the factors, can be one of
 #' "svd" (truncated SVD on \code{Y}) or "random";
 #' @param niter Total number of Gibbs sampling iterations;
-#' @param average_niter Number of last iterations to obtain the posterior samples of parameters;
-#' @param lfsr_niter Number of last iterations of posterior samples to compute LFSR from;
+#' @param used_niter Number of iterations (counting from the last iteration)
+#' from which the posterior means of parameters are to be computed;
+#' @param lfsr_niter Number of iterations (counting from the last iteration)
+#' of posterior samples to use for the computation of LFSR;
 #' @param return_samples Boolean indicator of whether all posterior samples throughout
 #' Gibbs sampling should be returned;
 #' @return A list of class 'gsfa_fit' which stores the Gibbs sampling updates
@@ -31,8 +33,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' fit0 <- fit_gsfa_multivar(Y, G, 10, init.method = "svd", niter = 500, average_niter = 200)
-#' fit1 <- fit_gsfa_multivar(Y, G, fit0 = fit0, niter = 500, average_niter = 200)
+#' fit0 <- fit_gsfa_multivar(Y, G, 10, init.method = "svd", niter = 500, used_niter = 200)
+#' fit1 <- fit_gsfa_multivar(Y, G, fit0 = fit0, niter = 500, used_niter = 200)
 #' }
 fit_gsfa_multivar <- function(Y, G, K, fit0,
                               prior_type = c("mixture_normal", "spike_slab"),
@@ -40,8 +42,8 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                               prior_w_s = 50, prior_w_r = 0.2,
                               prior_beta_s = 20, prior_beta_r = 0.2,
                               niter = 500,
-                              average_niter = floor(niter/2),
-                              lfsr_niter = average_niter,
+                              used_niter = floor(niter/2),
+                              lfsr_niter = used_niter,
                               verbose = TRUE, return_samples = TRUE){
   prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
@@ -69,7 +71,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                           initialize = init.method,
                           prior_s = prior_w_s, prior_r = prior_w_r,
                           prior_sb = prior_beta_s, prior_rb = prior_beta_r,
-                          niter = niter, ave_niter = average_niter, lfsr_niter = lfsr_niter,
+                          niter = niter, ave_niter = used_niter, lfsr_niter = lfsr_niter,
                           verbose = verbose, return_samples = return_samples)
   }
   if (missing(K)){
@@ -93,7 +95,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                                   prior_params = fit0$prior_params,
                                   prior_type = prior_type,
                                   niter = niter,
-                                  ave_niter = average_niter,
+                                  ave_niter = used_niter,
                                   lfsr_niter = lfsr_niter,
                                   verbose = verbose,
                                   return_samples = return_samples)
@@ -146,16 +148,19 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' indicating one of the two groups each sample belongs to;
 #' @param K Number of factors to use in the model; only one of \code{K}
 #' and \code{fit0} is needed;
-#' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous \code{fit_gsfa_multivar}
-#' run, so that more iterations of Gibbs sampling can be carried out on top of it;
+#' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous
+#' \code{fit_gsfa_multivar} run, so that more iterations of Gibbs sampling
+#' can continue from the last updates in it;
 #' only one of \code{K} and \code{fit0} is needed;
 #' @param prior_type Type of sparse prior used on gene weights, can be "mixture_normal"
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
 #' @param init.method Method to initialize the factors, can be one of
 #' "svd" (truncated SVD on \code{Y}) or "random";
 #' @param niter Total number of Gibbs sampling iterations;
-#' @param average_niter Number of last iterations to obtain the posterior samples of parameters;
-#' @param lfsr_niter Number of last iterations of posterior samples to compute LFSR from;
+#' @param used_niter Number of iterations (counting from the last iteration)
+#' from which the posterior means of parameters are to be computed;
+#' @param lfsr_niter Number of iterations (counting from the last iteration)
+#' of posterior samples to use for the computation of LFSR;
 #' @param return_samples Boolean indicator of whether all posterior samples throughout
 #' Gibbs sampling should be returned;
 #' @return A list of class 'gsfa_fit' which stores the Gibbs sampling updates
@@ -168,8 +173,8 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #'
 #' @examples
 #' \dontrun{
-#' fit0 <- fit_gsfa_multivar_2groups(Y, G, group, 10, init.method = "svd", niter = 500, average_niter = 200)
-#' fit1 <- fit_gsfa_multivar_2groups(Y, G, group, fit0 = fit0, niter = 500, average_niter = 200)
+#' fit0 <- fit_gsfa_multivar_2groups(Y, G, group, 10, init.method = "svd", niter = 500, used_niter = 200)
+#' fit1 <- fit_gsfa_multivar_2groups(Y, G, group, fit0 = fit0, niter = 500, used_niter = 200)
 #' }
 fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                       prior_type = c("mixture_normal", "spike_slab"),
@@ -177,8 +182,8 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                       prior_w_s = 50, prior_w_r = 0.2,
                                       prior_beta_s = 20, prior_beta_r = 0.2,
                                       niter = 500,
-                                      average_niter = floor(niter/2),
-                                      lfsr_niter = average_niter,
+                                      used_niter = floor(niter/2),
+                                      lfsr_niter = used_niter,
                                       verbose = TRUE, return_samples = TRUE){
   prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
@@ -231,7 +236,7 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                   initialize = init.method,
                                   prior_s = prior_w_s, prior_r = prior_w_r,
                                   prior_sb = prior_beta_s, prior_rb = prior_beta_r,
-                                  niter = niter, ave_niter = average_niter,
+                                  niter = niter, ave_niter = used_niter,
                                   lfsr_niter = lfsr_niter,
                                   verbose = verbose, return_samples = return_samples)
   }
@@ -256,7 +261,7 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                      prior_params = fit0$prior_params,
                                      prior_type = prior_type,
                                      niter = niter,
-                                     ave_niter = average_niter,
+                                     ave_niter = used_niter,
                                      lfsr_niter = lfsr_niter,
                                      verbose = verbose,
                                      return_samples = return_samples)

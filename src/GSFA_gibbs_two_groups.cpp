@@ -228,7 +228,7 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
                              Named("sigma_w2") = sigma_w2,
                              Named("sigma_b20") = sigma_b20, Named("sigma_b21") = sigma_b21,
                              Named("c2") = c2,
-                             Named("niters") = niter, Named("average_niters") = ave_niter);
+                             Named("niter") = niter, Named("used_niter") = ave_niter);
   // Compute the posterior means:
   List pm_list;
   pm_list = compute_posterior_mean_2groups_cpp(Gamma0_mtx, beta0_mtx, pi_beta0_mtx,
@@ -439,7 +439,7 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
                              Named("sigma_w2") = sigma_w2,
                              Named("sigma_b20") = sigma_b20, Named("sigma_b21") = sigma_b21,
                              Named("c2") = c2,
-                             Named("niters") = niter, Named("average_niters") = ave_niter);
+                             Named("niter") = niter, Named("used_niter") = ave_niter);
   // Compute the posterior means:
   List pm_list;
   pm_list = compute_posterior_mean_2groups_cpp(Gamma0_mtx, beta0_mtx, pi_beta0_mtx,

@@ -16,8 +16,8 @@ fit_gsfa_multivar(
   prior_beta_s = 20,
   prior_beta_r = 0.2,
   niter = 500,
-  average_niter = floor(niter/2),
-  lfsr_niter = average_niter,
+  used_niter = floor(niter/2),
+  lfsr_niter = used_niter,
   verbose = TRUE,
   return_samples = TRUE
 )
@@ -33,9 +33,9 @@ length or nrow of \code{G} should be the same as \code{nrow(Y)};}
 \item{K}{Number of factors to use in the model; only one of \code{K}
 and \code{fit0} is needed;}
 
-\item{fit0}{A list of class 'gsfa_fit' that is obtained from a previous \code{fit_gsfa_multivar}
-run, so that more iterations of Gibbs sampling can be carried out on top of it;
-only one of \code{K} and \code{fit0} is needed;}
+\item{fit0}{A list of class 'gsfa_fit' that is obtained from a previous
+\code{fit_gsfa_multivar} run, so that more iterations of Gibbs sampling
+can continue from the last updates in it;}
 
 \item{prior_type}{Type of sparse prior used on gene weights, can be "mixture_normal"
 or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;}
@@ -45,9 +45,11 @@ or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;}
 
 \item{niter}{Total number of Gibbs sampling iterations;}
 
-\item{average_niter}{Number of last iterations to obtain the posterior samples of parameters;}
+\item{used_niter}{Number of iterations (counting from the last iteration)
+from which the posterior means of parameters are to be computed;}
 
-\item{lfsr_niter}{Number of last iterations of posterior samples to compute LFSR from;}
+\item{lfsr_niter}{Number of iterations (counting from the last iteration)
+of posterior samples to use for the computation of LFSR;}
 
 \item{return_samples}{Boolean indicator of whether all posterior samples throughout
 Gibbs sampling should be returned;}
@@ -65,7 +67,7 @@ Uses functions implemented in Rcpp from \code{GSFA_gibbs_inference.cpp}.
 }
 \examples{
 \dontrun{
-fit0 <- fit_gsfa_multivar(Y, G, 10, init.method = "svd", niter = 500, average_niter = 200)
-fit1 <- fit_gsfa_multivar(Y, G, fit0 = fit0, niter = 500, average_niter = 200)
+fit0 <- fit_gsfa_multivar(Y, G, 10, init.method = "svd", niter = 500, used_niter = 200)
+fit1 <- fit_gsfa_multivar(Y, G, fit0 = fit0, niter = 500, used_niter = 200)
 }
 }
