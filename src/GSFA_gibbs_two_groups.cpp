@@ -16,8 +16,8 @@ using namespace arma;
 //' @param G sample by perturbation numeric matrix
 //' @param group binary vector indicating the group each sample belongs to
 //' @param K number of factors to infer in the model
-//' @param initialize character value indicating which initialization method to use, can be one of
-//' "svd", "random", or "given"
+//' @param initialize character value indicating which initialization method to
+//' use, can be one of "svd" or "random"
 //' @param niter a numeric value indicating the total number of iterations Gibbs sampling should last
 //' @param ave_niter a numeric value indicating how many of the last iterations
 //' should be used to compute the posterior means
@@ -29,7 +29,6 @@ using namespace arma;
 List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
                             String prior_type="mixture_normal",
                             String initialize="svd",
-                            Rcpp::Nullable<Rcpp::NumericMatrix> Z_given=R_NilValue,
                             double prior_s=50, double prior_r=0.1,
                             double prior_sb=20, double prior_rb=0.2,
                             double prior_gp=1, double prior_hp=1,
@@ -126,15 +125,13 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
   mat Z0 = Z.rows(index0);
   mat Z1 = Z.rows(index1);
 
-  List gammaBeta0;
-  gammaBeta0 = initialize_gammaBeta(M, K, G0, Z0);
-  mat Gamma0 = as<mat>(gammaBeta0["Gamma"]);
-  mat beta0 = as<mat>(gammaBeta0["beta"]);
+  mat beta0 = zeros<mat>(M,K);
+  mat Gamma0 = zeros<mat>(M,K);
+  initialize_GammaBeta(M, K, G0, Z0, beta0, Gamma0);
 
-  List gammaBeta1;
-  gammaBeta1 = initialize_gammaBeta(M, K, G1, Z1);
-  mat Gamma1 = as<mat>(gammaBeta1["Gamma"]);
-  mat beta1 = as<mat>(gammaBeta1["beta"]);
+  mat beta1 = zeros<mat>(M,K);
+  mat Gamma1 = zeros<mat>(M,K);
+  initialize_GammaBeta(M, K, G1, Z1, beta1, Gamma1);
 
   // Storing the initial values of parameters as samples at iteration 0:
   cube Z_mtx = zeros<cube>(N,K,niter+1);
@@ -168,38 +165,33 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
   int iter = 1;
 
   while (iter <= niter) {
-    gammaBeta0 = sample_gammaBeta_cpp(N0, M, K, Z0, G0, Gamma0, beta0, sigma_b20, pi_beta0);
-    Gamma0 = as<mat>(gammaBeta0["Gamma"]);
-    beta0 = as<mat>(gammaBeta0["beta"]);
-    gammaBeta1 = sample_gammaBeta_cpp(N1, M, K, Z1, G1, Gamma1, beta1, sigma_b21, pi_beta1);
-    Gamma1 = as<mat>(gammaBeta1["Gamma"]);
-    beta1 = as<mat>(gammaBeta1["beta"]);
+    sample_GammaBeta(N0, M, K, Z0, G0, Gamma0, beta0, sigma_b20, pi_beta0);
+    sample_GammaBeta(N1, M, K, Z1, G1, Gamma1, beta1, sigma_b21, pi_beta1);
 
-    pi_beta0 = sample_pi_beta_cpp(M, K, Gamma0, prior_pibeta);
-    sigma_b20 = sample_sigma_b2_cpp(M, Gamma0, beta0, prior_sigma2b);
-    pi_beta1 = sample_pi_beta_cpp(M, K, Gamma1, prior_pibeta);
-    sigma_b21 = sample_sigma_b2_cpp(M, Gamma1, beta1, prior_sigma2b);
+    sample_pi_beta(M, K, Gamma0, prior_pibeta, pi_beta0);
+    sample_sigma_b2(M, Gamma0, beta0, prior_sigma2b, sigma_b20);
 
-    Z0 = sample_Z_cpp(N0, K, Y0, F, W, G0, beta0, psi);
-    Z1 = sample_Z_cpp(N1, K, Y1, F, W, G1, beta1, psi);
+    sample_pi_beta(M, K, Gamma1, prior_pibeta, pi_beta1);
+    sample_sigma_b2(M, Gamma1, beta1, prior_sigma2b, sigma_b21);
+
+    sample_Z(N0, K, Y0, F, W, G0, beta0, psi, Z0);
+    sample_Z(N1, K, Y1, F, W, G1, beta1, psi, Z1);
     Z.rows(index0) = Z0;
     Z.rows(index1) = Z1;
 
-    psi = sample_psi_cpp(N, P, Y, Z, F, W, prior_psi);
+    sample_psi(N, P, Y, Z, F, W, prior_psi, psi);
     if (prior_type=="mixture_normal") {
-      W = sample_W_cpp(P, K, Y, Z, F, W, psi, sigma_w2, c2);
-      F = sample_F_cpp(P, K, W, pi_vec, sigma_w2, c2);
-      pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-      sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
-      c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
+      sample_W(P, K, Y, Z, F, W, psi, sigma_w2, c2);
+      sample_F(P, K, W, F, pi_vec, sigma_w2, c2);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2(K, P, F, W, prior_sigma2w, c2, sigma_w2);
+      sample_c2(K, P, F, W, sigma_w2, prior_c, c2);
       c2_mtx.col(iter) = c2;
     }
     if (prior_type=="spike_slab") {
-      FW = sample_FW_spike_slab_cpp(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
-      F = as<mat>(FW["F"]);
-      W = as<mat>(FW["W"]);
-      pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-      sigma_w2 = sample_sigma_w2_spike_slab_cpp(K, F, W, prior_sigma2w);
+      sample_FW_spike_slab(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2_spike_slab(K, F, W, prior_sigma2w, sigma_w2);
     }
 
     // Storing samples throughout iterations:
@@ -383,29 +375,34 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
   int iter = 1;
 
   while (iter <= niter) {
-    gammaBeta0 = sample_gammaBeta_cpp(N0, M, K, Z0, G0, Gamma0, beta0, sigma_b20, pi_beta0);
-    Gamma0 = as<mat>(gammaBeta0["Gamma"]);
-    beta0 = as<mat>(gammaBeta0["beta"]);
-    gammaBeta1 = sample_gammaBeta_cpp(N1, M, K, Z1, G1, Gamma1, beta1, sigma_b21, pi_beta1);
-    Gamma1 = as<mat>(gammaBeta1["Gamma"]);
-    beta1 = as<mat>(gammaBeta1["beta"]);
+    sample_GammaBeta(N0, M, K, Z0, G0, Gamma0, beta0, sigma_b20, pi_beta0);
+    sample_GammaBeta(N1, M, K, Z1, G1, Gamma1, beta1, sigma_b21, pi_beta1);
 
-    pi_beta0 = sample_pi_beta_cpp(M, K, Gamma0, prior_pibeta);
-    sigma_b20 = sample_sigma_b2_cpp(M, Gamma0, beta0, prior_sigma2b);
-    pi_beta1 = sample_pi_beta_cpp(M, K, Gamma1, prior_pibeta);
-    sigma_b21 = sample_sigma_b2_cpp(M, Gamma1, beta1, prior_sigma2b);
+    sample_pi_beta(M, K, Gamma0, prior_pibeta, pi_beta0);
+    sample_sigma_b2(M, Gamma0, beta0, prior_sigma2b, sigma_b20);
 
-    Z0 = sample_Z_cpp(N0, K, Y0, F, W, G0, beta0, psi);
-    Z1 = sample_Z_cpp(N1, K, Y1, F, W, G1, beta1, psi);
+    sample_pi_beta(M, K, Gamma1, prior_pibeta, pi_beta1);
+    sample_sigma_b2(M, Gamma1, beta1, prior_sigma2b, sigma_b21);
+
+    sample_Z(N0, K, Y0, F, W, G0, beta0, psi, Z0);
+    sample_Z(N1, K, Y1, F, W, G1, beta1, psi, Z1);
     Z.rows(index0) = Z0;
     Z.rows(index1) = Z1;
 
-    psi = sample_psi_cpp(N,P,Y,Z,F,W,prior_psi);
-    W = sample_W_cpp(P, K, Y, Z, F, W, psi, sigma_w2, c2);
-    F = sample_F_cpp(P, K,  W, pi_vec, sigma_w2, c2);
-    pi_vec = sample_pi_cpp(P, K, F, prior_pi);
-    sigma_w2 = sample_sigma_w2_cpp(K, P, F, W, prior_sigma2w, c2);
-    c2 = sample_c2_cpp(K, P, F, W, sigma_w2, prior_c);
+    sample_psi(N, P, Y, Z, F, W, prior_psi, psi);
+    if (prior_type=="mixture_normal") {
+      sample_W(P, K, Y, Z, F, W, psi, sigma_w2, c2);
+      sample_F(P, K, W, F, pi_vec, sigma_w2, c2);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2(K, P, F, W, prior_sigma2w, c2, sigma_w2);
+      sample_c2(K, P, F, W, sigma_w2, prior_c, c2);
+      c2_mtx.col(iter) = c2;
+    }
+    if (prior_type=="spike_slab") {
+      sample_FW_spike_slab(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec);
+      sample_pi(P, K, F, prior_pi, pi_vec);
+      sample_sigma_w2_spike_slab(K, F, W, prior_sigma2w, sigma_w2);
+    }
 
     // Store samples throughout iterations:
     Gamma0_mtx.slice(iter) = Gamma0;
@@ -421,7 +418,6 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
     W_mtx.slice(iter) = W;
     pi_mtx.col(iter) = pi_vec;
     sigma_w2_mtx.col(iter) = sigma_w2;
-    c2_mtx.col(iter) = c2;
 
     if (verbose) {
       if (iter % 50 == 0) {

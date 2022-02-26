@@ -11,13 +11,13 @@ fit_gsfa_multivar_2groups(
   K,
   fit0,
   prior_type = c("mixture_normal", "spike_slab"),
-  init.method = c("svd", "random", "given"),
+  init.method = c("svd", "random"),
   prior_w_s = 50,
   prior_w_r = 0.2,
   prior_beta_s = 20,
   prior_beta_r = 0.2,
   niter = 500,
-  average_niter = 200,
+  average_niter = floor(niter/2),
   lfsr_niter = average_niter,
   verbose = TRUE,
   return_samples = TRUE
@@ -31,7 +31,8 @@ fit_gsfa_multivar_2groups(
 that stores sample-level perturbation information;
 length or nrow of \code{G} should be the same as \code{nrow(Y)};}
 
-\item{group}{binary vector indicating the group each sample belongs to;}
+\item{group}{a vector of sample size length, with two types of unique values
+indicating one of the two groups each sample belongs to;}
 
 \item{K}{Number of factors to use in the model; only one of \code{K}
 and \code{fit0} is needed;}
@@ -65,7 +66,7 @@ information using Gibbs sampling for samples that come from two groups
 }
 \details{
 Similar to the function \code{fit_gsfa_multivar()}, but associations
-between factors and perturbations are estimated for the two groups of samples separately.
+between factors and perturbations are estimated for each group of samples separately.
 }
 \examples{
 \dontrun{

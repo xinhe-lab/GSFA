@@ -9,8 +9,8 @@ restart_gsfa_gibbs_cpp <- function(Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, 
     .Call('_GSFA_restart_gsfa_gibbs_cpp', PACKAGE = 'GSFA', Y, G, Z, F, W, Gamma, beta, pi_vec, pi_beta, psi, sigma_w2, sigma_b2, c2, prior_params, prior_type, niter, ave_niter, lfsr_niter, verbose, return_samples)
 }
 
-gsfa_gibbs_2groups_cpp <- function(Y, G, group, K, prior_type = "mixture_normal", initialize = "svd", Z_given = NULL, prior_s = 50, prior_r = 0.1, prior_sb = 20, prior_rb = 0.2, prior_gp = 1, prior_hp = 1, prior_gb = 1, prior_hb = 1, prior_gw = 1, prior_hw = 1, prior_gc = 3, prior_hc = 0.5, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
-    .Call('_GSFA_gsfa_gibbs_2groups_cpp', PACKAGE = 'GSFA', Y, G, group, K, prior_type, initialize, Z_given, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples)
+gsfa_gibbs_2groups_cpp <- function(Y, G, group, K, prior_type = "mixture_normal", initialize = "svd", prior_s = 50, prior_r = 0.1, prior_sb = 20, prior_rb = 0.2, prior_gp = 1, prior_hp = 1, prior_gb = 1, prior_hb = 1, prior_gw = 1, prior_hw = 1, prior_gc = 3, prior_hc = 0.5, niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
+    .Call('_GSFA_gsfa_gibbs_2groups_cpp', PACKAGE = 'GSFA', Y, G, group, K, prior_type, initialize, prior_s, prior_r, prior_sb, prior_rb, prior_gp, prior_hp, prior_gb, prior_hb, prior_gw, prior_hw, prior_gc, prior_hc, niter, ave_niter, lfsr_niter, verbose, return_samples)
 }
 
 restart_gibbs_2groups_cpp <- function(Y, G, group, Z, F, W, Gamma0, Gamma1, beta0, beta1, pi_vec, pi_beta0, pi_beta1, psi, sigma_w2, sigma_b20, sigma_b21, c2, prior_params, prior_type = "mixture_normal", niter = 500L, ave_niter = 200L, lfsr_niter = 200L, verbose = TRUE, return_samples = TRUE) {
@@ -21,96 +21,48 @@ mvrnormArma <- function(mu, sigma) {
     .Call('_GSFA_mvrnormArma', PACKAGE = 'GSFA', mu, sigma)
 }
 
-sample_Z_cpp <- function(N, K, Y, F, W, G, beta, psi) {
-    .Call('_GSFA_sample_Z_cpp', PACKAGE = 'GSFA', N, K, Y, F, W, G, beta, psi)
-}
-
 sample_Z <- function(N, K, Y, F, W, G, beta, psi, Z) {
     invisible(.Call('_GSFA_sample_Z', PACKAGE = 'GSFA', N, K, Y, F, W, G, beta, psi, Z))
-}
-
-sample_gammaBeta_cpp <- function(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta) {
-    .Call('_GSFA_sample_gammaBeta_cpp', PACKAGE = 'GSFA', N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta)
 }
 
 sample_GammaBeta <- function(N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta) {
     invisible(.Call('_GSFA_sample_GammaBeta', PACKAGE = 'GSFA', N, M, K, Z, G, Gamma, beta, sigma_b2, pi_beta))
 }
 
-sample_W_cpp <- function(P, K, Y, Z, F, W, psi, sigma_w2, c2) {
-    .Call('_GSFA_sample_W_cpp', PACKAGE = 'GSFA', P, K, Y, Z, F, W, psi, sigma_w2, c2)
-}
-
 sample_W <- function(P, K, Y, Z, F, W, psi, sigma_w2, c2) {
     invisible(.Call('_GSFA_sample_W', PACKAGE = 'GSFA', P, K, Y, Z, F, W, psi, sigma_w2, c2))
-}
-
-sample_F_cpp <- function(P, K, W, pi_vec, sigma_w2, c2) {
-    .Call('_GSFA_sample_F_cpp', PACKAGE = 'GSFA', P, K, W, pi_vec, sigma_w2, c2)
 }
 
 sample_F <- function(P, K, W, F, pi_vec, sigma_w2, c2) {
     invisible(.Call('_GSFA_sample_F', PACKAGE = 'GSFA', P, K, W, F, pi_vec, sigma_w2, c2))
 }
 
-sample_FW_spike_slab_cpp <- function(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec) {
-    .Call('_GSFA_sample_FW_spike_slab_cpp', PACKAGE = 'GSFA', N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec)
-}
-
 sample_FW_spike_slab <- function(N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec) {
     invisible(.Call('_GSFA_sample_FW_spike_slab', PACKAGE = 'GSFA', N, P, K, Y, Z, F, W, psi, sigma_w2, pi_vec))
-}
-
-sample_psi_cpp <- function(N, P, Y, Z, F, W, prior_psi) {
-    .Call('_GSFA_sample_psi_cpp', PACKAGE = 'GSFA', N, P, Y, Z, F, W, prior_psi)
 }
 
 sample_psi <- function(N, P, Y, Z, F, W, prior_psi, psi) {
     invisible(.Call('_GSFA_sample_psi', PACKAGE = 'GSFA', N, P, Y, Z, F, W, prior_psi, psi))
 }
 
-sample_pi_cpp <- function(P, K, F, prior_pi) {
-    .Call('_GSFA_sample_pi_cpp', PACKAGE = 'GSFA', P, K, F, prior_pi)
-}
-
 sample_pi <- function(P, K, F, prior_pi, pi_vec) {
     invisible(.Call('_GSFA_sample_pi', PACKAGE = 'GSFA', P, K, F, prior_pi, pi_vec))
-}
-
-sample_pi_beta_cpp <- function(M, K, Gamma, prior_pibeta) {
-    .Call('_GSFA_sample_pi_beta_cpp', PACKAGE = 'GSFA', M, K, Gamma, prior_pibeta)
 }
 
 sample_pi_beta <- function(M, K, Gamma, prior_pibeta, pi_beta) {
     invisible(.Call('_GSFA_sample_pi_beta', PACKAGE = 'GSFA', M, K, Gamma, prior_pibeta, pi_beta))
 }
 
-sample_sigma_w2_cpp <- function(K, P, F, W, prior_sigma2w, c2) {
-    .Call('_GSFA_sample_sigma_w2_cpp', PACKAGE = 'GSFA', K, P, F, W, prior_sigma2w, c2)
-}
-
 sample_sigma_w2 <- function(K, P, F, W, prior_sigma2w, c2, sigma_w2_vec) {
     invisible(.Call('_GSFA_sample_sigma_w2', PACKAGE = 'GSFA', K, P, F, W, prior_sigma2w, c2, sigma_w2_vec))
-}
-
-sample_sigma_w2_spike_slab_cpp <- function(K, F, W, prior_sigma2w) {
-    .Call('_GSFA_sample_sigma_w2_spike_slab_cpp', PACKAGE = 'GSFA', K, F, W, prior_sigma2w)
 }
 
 sample_sigma_w2_spike_slab <- function(K, F, W, prior_sigma2w, sigma_w2_vec) {
     invisible(.Call('_GSFA_sample_sigma_w2_spike_slab', PACKAGE = 'GSFA', K, F, W, prior_sigma2w, sigma_w2_vec))
 }
 
-sample_c2_cpp <- function(K, P, F, W, sigma2w, prior_c) {
-    .Call('_GSFA_sample_c2_cpp', PACKAGE = 'GSFA', K, P, F, W, sigma2w, prior_c)
-}
-
 sample_c2 <- function(K, P, F, W, sigma2w, prior_c, c2) {
     invisible(.Call('_GSFA_sample_c2', PACKAGE = 'GSFA', K, P, F, W, sigma2w, prior_c, c2))
-}
-
-sample_sigma_b2_cpp <- function(M, Gamma, beta, prior_sigma2b) {
-    .Call('_GSFA_sample_sigma_b2_cpp', PACKAGE = 'GSFA', M, Gamma, beta, prior_sigma2b)
 }
 
 sample_sigma_b2 <- function(M, Gamma, beta, prior_sigma2b, sigma_b2_vec) {
@@ -127,10 +79,6 @@ initialize_svd <- function(K, Y, Z, F, W) {
 
 initialize_given_Z <- function(K, Y, Z, F, W) {
     invisible(.Call('_GSFA_initialize_given_Z', PACKAGE = 'GSFA', K, Y, Z, F, W))
-}
-
-initialize_gammaBeta <- function(M, K, G, Z) {
-    .Call('_GSFA_initialize_gammaBeta', PACKAGE = 'GSFA', M, K, G, Z)
 }
 
 initialize_GammaBeta <- function(M, K, G, Z, beta, Gamma) {

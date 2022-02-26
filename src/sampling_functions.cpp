@@ -34,29 +34,6 @@ arma::vec mvrnormArma(arma::vec mu, arma::mat sigma) {
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::mat sample_Z_cpp(int N,int K,
-                       arma::mat Y, arma::mat F, arma::mat W,
-                       arma::mat G, arma::mat beta, arma::vec psi){
-  mat Z = zeros<mat>(N,K);
-  mat Psi_inv = diagmat(1/psi); // 1/(psi_x_vector+0.000001) when necessary
-  vec I(K);
-  I.ones();
-  mat WTP = W.t() * Psi_inv;
-  mat Sigma = inv_sympd(WTP * W + diagmat(I));
-  vec mu_i(K);
-  vec tmp_i(K);
-  for (int i=0; i<N; i++) {
-    colvec Y_i = conv_to< colvec >::from(Y.row(i));
-    tmp_i = (G.row(i) * beta).t();
-    mu_i = Sigma * (WTP * Y_i + tmp_i);
-    Z.row(i) = conv_to< rowvec >::from(mvnrnd(mu_i, Sigma));
-  }
-  // mvnrnd(mu,sigma,n) returns n column vectors
-  return Z;
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
 void sample_Z(int N,int K, arma::mat Y, arma::mat F, arma::mat W,
               arma::mat G, arma::mat beta, arma::vec psi, arma::mat& Z){
   mat Psi_inv = diagmat(1/psi); // 1/(psi_x_vector+0.000001) when necessary
@@ -73,52 +50,6 @@ void sample_Z(int N,int K, arma::mat Y, arma::mat F, arma::mat W,
     Z.row(i) = conv_to< rowvec >::from(mvnrnd(mu_i, Sigma));
   }
   // mvnrnd(mu,sigma,n) returns n column vectors
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-List sample_gammaBeta_cpp(int N, int M, int K,
-                          arma::mat Z, arma::mat G,
-                          arma::mat Gamma, arma::mat beta,
-                          arma::vec sigma_b2, arma::vec pi_beta){
-  double log_qgamma;
-  double qgamma;
-  mat mu = zeros<mat>(M,K);
-  mat L = zeros<mat>(M,K);
-  rowvec sum_G2 = sum(square(G),0);
-
-  for (int k=0; k<K; k++) {
-    for (int m=0; m<M; m++) {
-      L(m,k) = 1.0 / (sum_G2(m) + 1.0/sigma_b2(m));
-      double sum_RG = 0;
-      for (int i=0; i<N; i++){
-        sum_RG = sum_RG + G(i,m) * (Z(i,k) - dot(G.row(i), beta.col(k)) + G(i,m)*beta(m,k));
-      }
-      mu(m,k) = L(m,k) * sum_RG;
-
-      log_qgamma = std::log(L(m,k)/sigma_b2(m)) / 2 +
-        mu(m,k) * mu(m,k) / (L(m,k) * 2) +
-        std::log(pi_beta(m)) - std::log(1-pi_beta(m));
-      if (log_qgamma > 30){
-        Gamma(m,k) = 1;
-        // R::rbinom(1, p) does not perform sampling and move the random seed
-        // forward when p > 1-E-17 (the exact boundary depends on the machine)
-        // Need to manually add a rbinom sampling step to move the random
-        // seed along and ensure reproducibility
-        move_seed_rbinom();
-      } else {
-        qgamma = 1.0 / (std::exp(-log_qgamma) + 1);
-        Gamma(m,k) = R::rbinom(1, qgamma);
-      }
-
-      if (Gamma(m,k) == 1){
-        beta(m,k) = R::rnorm(mu(m,k), sqrt(L(m,k)));
-      } else {
-        beta(m,k) = 0;
-      }
-    }
-  }
-  return List::create(Named("Gamma") = Gamma, Named("beta") = beta);
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -168,31 +99,6 @@ void sample_GammaBeta(int N, int M, int K,
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::mat sample_W_cpp(int P, int K,
-                       arma::mat Y, arma::mat Z,
-                       arma::mat F, arma::mat W,
-                       arma::vec psi, arma::vec sigma_w2, arma::vec c2){
-
-  mat log_qF = zeros<mat>(P,K);
-  mat lambda = zeros<mat>(P,K);
-  mat nu = zeros<mat>(P,K);
-  mat ZTZ = Z.t()*Z;
-
-  for (int j=0; j<P; j++) {
-    vec diag_vec = zeros<vec>(K);
-    for (int k=0; k<K; k++) {
-      diag_vec(k) = psi(j) / (sigma_w2(k) * (F(j,k) + (1-F(j,k))*c2(k)));
-    }
-    mat D_j = diagmat(diag_vec);
-    mat Lambda_j = inv_sympd(ZTZ + D_j);
-    vec nu_j = Lambda_j * Z.t() * Y.col(j);
-    W.row(j) = conv_to< rowvec >::from(mvnrnd(nu_j, Lambda_j * psi(j)));
-  }
-  return W;
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
 void sample_W(int P, int K, arma::mat Y, arma::mat Z,
               arma::mat F, arma::mat& W,
               arma::vec psi, arma::vec sigma_w2, arma::vec c2){
@@ -212,35 +118,6 @@ void sample_W(int P, int K, arma::mat Y, arma::mat Z,
     vec nu_j = Lambda_j * Z.t() * Y.col(j);
     W.row(j) = conv_to< rowvec >::from(mvnrnd(nu_j, Lambda_j * psi(j)));
   }
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-arma::mat sample_F_cpp(int P, int K,
-                       arma::mat W, arma::vec pi_vec,
-                       arma::vec sigma_w2, arma::vec c2){
-  double log_ratio;
-  double ratio;
-  mat F = zeros<mat>(P,K);
-  for (int j=0; j<P; j++) {
-    for (int k=0; k<K; k++) {
-      log_ratio = std::log(pi_vec(k)) - std::log(1-pi_vec(k)) +
-        std::log(c2(k)) / 2. +
-        pow(W(j,k), 2)/(2*sigma_w2(k)) * (1.0/c2(k) - 1);
-      if (log_ratio > 30){
-        F(j,k) = 1;
-        // R::rbinom(1, p) does not perform sampling and move the random seed
-        // forward when p > 1-E-17 (the exact boundary depends on the machine)
-        // Need to manually add a rbinom sampling step to move the random
-        // seed along and ensure reproducibility
-        move_seed_rbinom();
-      } else {
-        ratio = 1.0 / (std::exp(-log_ratio) + 1);
-        F(j,k) = R::rbinom(1, ratio);
-      }
-    }
-  }
-  return F;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -267,42 +144,6 @@ void sample_F(int P, int K, arma::mat W, arma::mat& F,
       }
     }
   }
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-List sample_FW_spike_slab_cpp(int N, int P, int K,
-                              arma::mat Y, arma::mat Z,
-                              arma::mat F, arma::mat W,
-                              arma::vec psi, arma::vec sigma_w2, arma::vec pi_vec){
-
-  mat log_qF = zeros<mat>(P,K);
-  mat lambda = zeros<mat>(P,K);
-  mat nu = zeros<mat>(P,K);
-  rowvec sum_Z2 = sum(square(Z),0);
-
-  for (int j=0; j<P; j++) {
-    for (int k=0; k<K; k++) {
-      lambda(j,k) = 1.0 / (sum_Z2(k)/psi(j) + 1/sigma_w2(k));
-      double sum_ZB = 0;
-      for (int i=0; i<N; i++){
-        sum_ZB = sum_ZB + Z(i,k) * (Y(i,j) - dot(Z.row(i), W.row(j)) + Z(i,k)*W(j,k));
-      }
-      nu(j,k) = lambda(j,k) * sum_ZB / psi(j);
-
-      log_qF(j,k) = std::log(lambda(j,k)/sigma_w2(k))/2 + nu(j,k)*nu(j,k)/(lambda(j,k)*2) +
-        std::log(pi_vec(k)) - std::log(1-pi_vec(k));
-      double qF = 1.0 / (std::exp(-log_qF(j,k)) + 1);
-
-      F(j,k) = R::rbinom(1, qF);
-      if (F(j,k)==1){
-        W(j,k) = R::rnorm(nu(j,k), sqrt(lambda(j,k)));
-      } else {
-        W(j,k) = 0;
-      }
-    }
-  }
-  return List::create(Named("F") = F, Named("W") = W);
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -342,24 +183,6 @@ void sample_FW_spike_slab(int N, int P, int K,
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::vec sample_psi_cpp(int N, int P,
-                         arma::mat Y, arma::mat Z, arma::mat F, arma::mat W,
-                         arma::vec prior_psi){
-  vec psi = zeros<vec>(P);
-  // mat W = F%U;
-  mat E = Y-Z*W.t();
-  rowvec sum_E2 = sum(E%E,0);
-  double a,b;
-  a = prior_psi(0) + N/2.0;
-  for (int j=0; j<P; j++) {
-    b = prior_psi(1) + sum_E2(j)/2.0;
-    psi(j) = 1.0/R::rgamma(a, 1.0/b);
-  }
-  return psi;
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
 void sample_psi(int N, int P,
                 arma::mat Y, arma::mat Z, arma::mat F, arma::mat W,
                 arma::vec prior_psi, arma::vec& psi){
@@ -371,20 +194,6 @@ void sample_psi(int N, int P,
     b = prior_psi(1) + sum_E2(j)/2.0;
     psi(j) = 1.0/R::rgamma(a, 1.0/b);
   }
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-arma::vec sample_pi_cpp(int P, int K, arma::mat F, arma::vec prior_pi){
-  vec pi_vec = zeros<vec>(K);
-  rowvec sum_F = sum(F,0); // col-wise sum returns a row vector
-  double a,b;
-  for (int k=0; k<K; k++) {
-    a = prior_pi(0)*prior_pi(1) + sum_F(k);
-    b = prior_pi(0)*(1-prior_pi(1)) + P - sum_F(k);
-    pi_vec(k) = R::rbeta(a, b);
-  }
-  return pi_vec;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -401,21 +210,6 @@ void sample_pi(int P, int K, arma::mat F, arma::vec prior_pi, arma::vec& pi_vec)
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::vec sample_pi_beta_cpp(int M, int K,
-                             arma::mat Gamma, arma::vec prior_pibeta){
-  vec pi_beta = zeros<vec>(M);
-  colvec sum_Gamma = sum(Gamma,1); // row-wise sum returns a column vector
-  double a,b;
-  for (int m=0; m<M; m++) {
-    a = prior_pibeta(0)*prior_pibeta(1) + sum_Gamma(m);
-    b = prior_pibeta(0)*(1-prior_pibeta(1)) + K - sum_Gamma(m);
-    pi_beta(m) = R::rbeta(a, b);
-  }
-  return pi_beta;
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
 void sample_pi_beta(int M, int K,
                     arma::mat Gamma, arma::vec prior_pibeta,
                     arma::vec& pi_beta){
@@ -426,22 +220,6 @@ void sample_pi_beta(int M, int K,
     b = prior_pibeta(0)*(1-prior_pibeta(1)) + K - sum_Gamma(m);
     pi_beta(m) = R::rbeta(a, b);
   }
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-arma::vec sample_sigma_w2_cpp(int K, int P,
-                              arma::mat F, arma::mat W,
-                              arma::vec prior_sigma2w, arma::vec c2){
-  vec sigma_w2_vec = zeros<vec>(K);
-  double a,b;
-  for (int k=0; k<K; k++) {
-    double sum_W2 = sum(W.col(k)%W.col(k) / (F.col(k)+(1-F.col(k))*c2(k)));
-    a = prior_sigma2w(0) + P/2.0;
-    b = prior_sigma2w(1) + sum_W2/2.0;
-    sigma_w2_vec(k) = 1.0/R::rgamma(a, 1.0/b);
-  }
-  return sigma_w2_vec;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -461,23 +239,6 @@ void sample_sigma_w2(int K, int P,
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::vec sample_sigma_w2_spike_slab_cpp(int K, arma::mat F, arma::mat W,
-                                         arma::vec prior_sigma2w){
-  vec sigma_w2_vec = zeros<vec>(K);
-  // mat W = F%U;
-  rowvec sum_W2 = sum(W%W,0); // colsum
-  rowvec sum_F = sum(F,0);
-  double a,b;
-  for (int k=0; k<K; k++) {
-    a = prior_sigma2w(0) + sum_F(k)/2.0;
-    b = prior_sigma2w(1) + sum_W2(k)/2.0;
-    sigma_w2_vec(k) = 1.0/R::rgamma(a, 1.0/b);
-  }
-  return sigma_w2_vec;
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
 void sample_sigma_w2_spike_slab(int K, arma::mat F, arma::mat W,
                                 arma::vec prior_sigma2w, arma::vec& sigma_w2_vec){
   rowvec sum_W2 = sum(W%W,0); // column-wise sum
@@ -488,23 +249,6 @@ void sample_sigma_w2_spike_slab(int K, arma::mat F, arma::mat W,
     b = prior_sigma2w(1) + sum_W2(k)/2.0;
     sigma_w2_vec(k) = 1.0/R::rgamma(a, 1.0/b);
   }
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-arma::vec sample_c2_cpp(int K, int P,
-                        arma::mat F, arma::mat W,
-                        arma::vec sigma2w, arma::vec prior_c){
-  vec c2 = zeros<vec>(K);
-  rowvec sum_F = sum(F,0);
-  rowvec sum_W2 = sum(W%W%(1-F), 0); // column-wise sum
-  double a,b;
-  for (int k=0; k<K; k++) {
-    a = prior_c(0) + (P-sum_F(k))/2.0;
-    b = prior_c(1) + sum_W2(k)/(sigma2w(k)*2.0);
-    c2(k) = 1.0/R::rgamma(a, 1.0/b);
-  }
-  return c2;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -521,22 +265,6 @@ void sample_c2(int K, int P,
     b = prior_c(1) + sum_W2(k)/(sigma2w(k)*2.0);
     c2(k) = 1.0/R::rgamma(a, 1.0/b);
   }
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-arma::vec sample_sigma_b2_cpp(int M, arma::mat Gamma, arma::mat beta,
-                              arma::vec prior_sigma2b){
-  vec sigma_b2_vec = zeros<vec>(M);
-  colvec sum_beta2 = sum(beta%beta,1); // row-wise sum
-  colvec sum_Gamma = sum(Gamma,1);
-  double a,b;
-  for (int m=0; m<M; m++) {
-    a = prior_sigma2b(0) + sum_Gamma(m)/2.0;
-    b = prior_sigma2b(1) + sum_beta2(m)/2.0;
-    sigma_b2_vec(m) = 1.0/R::rgamma(a, 1.0/b);
-  }
-  return sigma_b2_vec;
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -611,22 +339,6 @@ void initialize_given_Z(int K, arma::mat Y,
   umat init_bool = abs(U) > threshold;
   F = conv_to<mat>::from(init_bool);
   W = U % F;
-}
-
-// [[Rcpp::depends("RcppArmadillo")]]
-// [[Rcpp::export]]
-List initialize_gammaBeta(int M, int K, arma::mat G, arma::mat Z){
-  mat beta = zeros<mat>(M,K);
-  vec tmp_beta;
-  for (int m=0; m<M; m++){
-    vec G_col = G.col(m);
-    vec tmp_beta = Z.t() * G_col / (sum(G_col%G_col)+1e-4);
-    beta.row(m) = conv_to< rowvec >::from(tmp_beta);
-  }
-  umat init_bool = abs(beta) > Cquantile(vectorise(abs(beta)), 0.5);
-  mat Gamma = conv_to< mat >::from(init_bool);
-  beta = beta % Gamma;
-  return List::create(Named("Gamma") = Gamma, Named("beta") = beta);
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]

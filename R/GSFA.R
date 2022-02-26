@@ -36,16 +36,18 @@
 #' }
 fit_gsfa_multivar <- function(Y, G, K, fit0,
                               prior_type = c("mixture_normal", "spike_slab"),
-                              init.method = c("svd", "random", "given"),
+                              init.method = c("svd", "random"),
                               prior_w_s = 50, prior_w_r = 0.2,
                               prior_beta_s = 20, prior_beta_r = 0.2,
-                              niter = 500, average_niter = 200, lfsr_niter = average_niter,
+                              niter = 500,
+                              average_niter = floor(niter/2),
+                              lfsr_niter = average_niter,
                               verbose = TRUE, return_samples = TRUE){
   prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
   stopifnot(is.matrix(Y))
-  # Add an offset of 1
-  if (is.vector(G)){
+  # Add a column of 1's to G to help infer the offset
+  if (is.vector(G) & is.numeric(G)){
     stopifnot(length(G) == nrow(Y))
     G <- cbind(G, rep(1, length(G)))
   } else if (is.matrix(G)){
@@ -134,13 +136,14 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' @description Performs GSFA on given gene expression matrix and matching perturbation
 #' information using Gibbs sampling for samples that come from two groups
 #' @details Similar to the function \code{fit_gsfa_multivar()}, but associations
-#' between factors and perturbations are estimated for the two groups of samples separately.
+#' between factors and perturbations are estimated for each group of samples separately.
 #' @param Y A sample by gene numeric matrix that stores normalized gene expression values;
 #' \code{is.matrix(Y)} should be \code{TRUE};
 #' @param G Either a numeric vector or a sample by perturbation numeric matrix
 #' that stores sample-level perturbation information;
 #' length or nrow of \code{G} should be the same as \code{nrow(Y)};
-#' @param group binary vector indicating the group each sample belongs to;
+#' @param group a vector of sample size length, with two types of unique values
+#' indicating one of the two groups each sample belongs to;
 #' @param K Number of factors to use in the model; only one of \code{K}
 #' and \code{fit0} is needed;
 #' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous \code{fit_gsfa_multivar}
@@ -170,16 +173,18 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' }
 fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                       prior_type = c("mixture_normal", "spike_slab"),
-                                      init.method = c("svd", "random", "given"),
+                                      init.method = c("svd", "random"),
                                       prior_w_s = 50, prior_w_r = 0.2,
                                       prior_beta_s = 20, prior_beta_r = 0.2,
-                                      niter = 500, average_niter = 200, lfsr_niter = average_niter,
+                                      niter = 500,
+                                      average_niter = floor(niter/2),
+                                      lfsr_niter = average_niter,
                                       verbose = TRUE, return_samples = TRUE){
   prior_type <- match.arg(prior_type)
   init.method <- match.arg(init.method)
   stopifnot(is.matrix(Y))
-  # Add an offset of 1
-  if (is.vector(G)){
+  # Add a column of 1's to G to help infer the offset
+  if (is.vector(G) & is.numeric(G)){
     stopifnot(length(G) == nrow(Y))
     G <- cbind(G, rep(1, length(G)))
   } else if (is.matrix(G)){
@@ -188,6 +193,30 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
   } else {
     stop("G should be either a numeric vector or matrix.")
   }
+
+  if (is.vector(group) & length(group) == nrow(Y)){
+    if (length(unique(group)) != 2){
+      stop(paste0("There should be exactly 2 types of values in \"group\" to",
+                  " indicate the 2 sample groups."))
+    } else {
+      if (!is.factor(group)){
+        group <- factor(group)
+      }
+      print("The number of samples in each group:")
+      print(table(group))
+      group_levels <- levels(group)
+      if (length(group_levels) != 2){
+        stop("Please make sure your factor vector, \"group\", has only 2 levels.")
+      }
+      # Map "group" to a binary vector
+      numeric_group <- as.numeric(group) - 1
+      print(paste0("Samples of ", group_levels[1], " are assigned to group 0."))
+      print(paste0("Samples of ", group_levels[2], " are assigned to group 1."))
+    }
+  } else {
+    stop("\"group\" should be a vector with length equal to nrow(Y).")
+  }
+
   # Only one of "K" and "fit0" should be provided.
   # Argument "K" will be ignored if "fit0" is given.
   if (!(missing(K) & !missing(fit0) | (!missing(K) & missing(fit0)))){
@@ -196,7 +225,8 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
   }
 
   if (missing(fit0)){
-    fit <- gsfa_gibbs_2groups_cpp(Y = Y, G = G, group = group, K = K,
+    fit <- gsfa_gibbs_2groups_cpp(Y = Y, G = G,
+                                  group = numeric_group, K = K,
                                   prior_type = prior_type,
                                   initialize = init.method,
                                   prior_s = prior_w_s, prior_r = prior_w_r,
@@ -211,7 +241,7 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
       stop("Input argument \"fit0\" should be an object of class ",
            "\"gsfa_fit\", such as an output of fit_gsfa_multivar().")
     }
-    fit <- restart_gibbs_2groups_cpp(Y = Y, G = G, group = group,
+    fit <- restart_gibbs_2groups_cpp(Y = Y, G = G, group = numeric_group,
                                      Z = fit0$updates$Z,
                                      F = fit0$updates$F,
                                      W = fit0$updates$W,
