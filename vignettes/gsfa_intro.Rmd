@@ -70,7 +70,7 @@ fit <- fit_gsfa_multivar(Y = sim_data$Y, G = sim_data$G,
                          K = 5, init.method = "svd",
                          prior_w_s = 10, prior_w_r = 0.2,
                          prior_beta_s = 5, prior_beta_r = 0.2,
-                         niter = 1000, average_niter = 500, lfsr_niter = 500,
+                         niter = 1000, used_niter = 500,
                          verbose = T, return_samples = T)
 ```
 
