@@ -49,8 +49,8 @@ expression values;}
 \item{Z}{a sample by factor matrix;}
 \item{F}{a binary gene by factor matrix that indicates whether a gene has
 non-zero loading in the factor;}
-\item{U}{a gene by factor matrix with normal effect sizes, and F*U gives W,
-the loading matrix.}
+\item{U}{a gene by factor matrix with normal effect sizes, and \code{F*U}
+(element-wise multiplication) gives the loading matrix \code{W}.}
 }
 \description{
 Generate a binary perturbation matrix and a continuous gene
