@@ -2,7 +2,8 @@
 % Please edit documentation in R/simulate.R
 \name{poisson_count_sim_var_scale}
 \alias{poisson_count_sim_var_scale}
-\title{Simulate gene expression count data}
+\title{Add a Simulated Gene Count Matrix to a Dataset with Continuous Gene
+Expression}
 \usage{
 poisson_count_sim_var_scale(
   sim_data,
@@ -12,7 +13,7 @@ poisson_count_sim_var_scale(
 )
 }
 \arguments{
-\item{sim_data}{A dataset generated from \code{normal_data_sim()}}
+\item{sim_data}{A dataset of list type generated from \code{normal_data_sim()}}
 
 \item{p_scale_mean}{The mean of the normal distribution where the library
 size is drawn from}
@@ -28,11 +29,21 @@ dataset input.
 }
 \description{
 Generate gene expression count data from a Poisson model based on
-the continuous gene expression rates generated from a normal model.
+the continuous gene expression rates generated from a normal model,
+incorporating varying scaling factors (library sizes) across cells.
 }
 \details{
 Count \eqn{c_{ij}} is generated from a Poisson model based on
 rate \eqn{y_{ij}} and library size (or scaling factor) \eqn{L_i} generated
-from a normal model.
+from a normal model:
+\deqn{L_i \sim N(\text{p_scale_mean}, \text{p_scale_sd}^2)}
+\deqn{L_i = max(L_i, 0)}
 \deqn{c_{ij} \sim Pois(L_i exp(y_{ij} + \text{p_offset}))}
+}
+\examples{
+set.seed(12345)
+beta_true <- rbind(c(1, 0, 0, 0, 0), c(0, 0.8, 0, 0, 0))
+sim_data <- normal_data_sim(N = 4000, P = 6000, beta_true = beta_true)
+sim_data <- poisson_count_sim_var_scale(sim_data)
+
 }

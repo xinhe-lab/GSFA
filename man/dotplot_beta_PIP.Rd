@@ -6,7 +6,7 @@
 \usage{
 dotplot_beta_PIP(
   fit,
-  target_names,
+  target_names = NULL,
   reorder_targets = target_names,
   reorder_factors = NULL,
   exclude_offset = TRUE
@@ -14,6 +14,15 @@ dotplot_beta_PIP(
 }
 \arguments{
 \item{fit}{An object of class \code{"gsfa_fit"}}
+
+\item{target_names}{Names of the perturbations, the default uses the
+row names in \code{fit$posterior_means$beta_pm}}
+
+\item{reorder_targets}{A subset or rearrangement of \code{target_names}
+if one wishes to visualize a subset of perturbations or rearrange their order}
+
+\item{reorder_factors}{A subset or rearrangement of factor indices if
+one wishes to visualize a subset of factors or rearrange their order}
 }
 \value{
 A \code{ggplot} object.

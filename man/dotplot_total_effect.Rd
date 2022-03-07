@@ -15,6 +15,17 @@ dotplot_total_effect(
 }
 \arguments{
 \item{fit}{An object of class \code{"gsfa_fit"}}
+
+\item{gene_indices}{The indices of genes to visualize}
+
+\item{gene_names}{Names of the genes chosen to visualize, the default uses
+\code{gene_indices}}
+
+\item{target_names}{Names of the perturbations, the default uses the column
+names of \code{fit$lfsr}}
+
+\item{reorder_targets}{A subset or rearrangement of \code{target_names}
+if one wishes to visualize a subset of perturbations or rearrange their order}
 }
 \value{
 A \code{ggplot} object.
@@ -23,6 +34,7 @@ A \code{ggplot} object.
 Dotplot of the Total Effects of Perturbations on Genes
 }
 \details{
+Visualize the effects of perturbations on selected genes.
 Sizes of the dots represent LFSR bins;
 colors of the dots represent the summarized effect sizes.
 }

@@ -3,6 +3,12 @@
 #' the color represents the effect size.
 #'
 #' @param fit An object of class \code{"gsfa_fit"}
+#' @param target_names Names of the perturbations, the default uses the
+#' row names in \code{fit$posterior_means$beta_pm}
+#' @param reorder_targets A subset or rearrangement of \code{target_names}
+#' if one wishes to visualize a subset of perturbations or rearrange their order
+#' @param reorder_factors A subset or rearrangement of factor indices if
+#' one wishes to visualize a subset of factors or rearrange their order
 #' @return A \code{ggplot} object.
 #'
 #' @importFrom magrittr %>%
@@ -18,7 +24,7 @@
 #' @export
 #'
 dotplot_beta_PIP <- function(fit,
-                             target_names,
+                             target_names = NULL,
                              reorder_targets = target_names,
                              reorder_factors = NULL,
                              exclude_offset = TRUE){
@@ -32,7 +38,16 @@ dotplot_beta_PIP <- function(fit,
     beta_pip <- beta_pip[, -ncol(beta_pip)]
     beta_pm <- beta_pm[, -ncol(beta_pm)]
   }
-  colnames(beta_pip) <- target_names
+  if (is.null(target_names)){
+    target_names <- colnames(beta_pm)
+  } else {
+    colnames(beta_pip) <- target_names
+    colnames(beta_pm) <- target_names
+  }
+  if (is.null(reorder_targets)){
+    reorder_targets <- target_names
+  }
+
   beta_pip <- beta_pip[, reorder_targets]
   beta_pip_df <- as.data.frame(beta_pip)
   beta_pip_df$Factor <- paste0("Factor ", 1:nrow(beta_pip_df))
@@ -41,7 +56,6 @@ dotplot_beta_PIP <- function(fit,
   }
   beta_pip_plot_df <- melt(beta_pip_df, value.name = "PIP")
 
-  colnames(beta_pm) <- target_names
   beta_pm <- beta_pm[, reorder_targets]
   beta_pm_df <- as.data.frame(beta_pm)
   beta_pm_df$Factor <- paste0("Factor ", 1:nrow(beta_pm_df))
@@ -71,10 +85,18 @@ dotplot_beta_PIP <- function(fit,
 }
 
 #' @title Dotplot of the Total Effects of Perturbations on Genes
-#' @details Sizes of the dots represent LFSR bins;
+#' @details Visualize the effects of perturbations on selected genes.
+#' Sizes of the dots represent LFSR bins;
 #' colors of the dots represent the summarized effect sizes.
 #'
 #' @param fit An object of class \code{"gsfa_fit"}
+#' @param gene_indices The indices of genes to visualize
+#' @param gene_names Names of the genes chosen to visualize, the default uses
+#' \code{gene_indices}
+#' @param target_names Names of the perturbations, the default uses the column
+#' names of \code{fit$lfsr}
+#' @param reorder_targets A subset or rearrangement of \code{target_names}
+#' if one wishes to visualize a subset of perturbations or rearrange their order
 #' @return A \code{ggplot} object.
 #'
 #' @importFrom magrittr %>%

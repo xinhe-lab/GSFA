@@ -2,18 +2,19 @@
 % Please edit documentation in R/simulate.R
 \name{normal_data_sim}
 \alias{normal_data_sim}
-\title{Simulate a dataset with gene expression and perturbation according to a normal model}
+\title{Simulate a Continuous Gene Expression Matrix and an Accompanying
+Perturbation Matrix}
 \usage{
 normal_data_sim(
   N = 400,
   P = 600,
-  K = 5,
-  M = 2,
-  beta_true = matrix(c(1, 0, 0, 0.8, 0, 0, 0, 0, 0, 0), ncol = K),
+  beta_true,
+  K = ncol(beta_true),
+  M = nrow(beta_true),
   pi_true = rep(0.1, K),
   sigma_w2_true = rep(0.5, K),
   psi_true = 1,
-  G_prob = 0.05,
+  G_prob = 0.2,
   offset = FALSE
 )
 }
@@ -22,17 +23,22 @@ normal_data_sim(
 
 \item{P}{Number of genes to simulate}
 
+\item{beta_true}{A \eqn{M} by \eqn{K} numeric matrix that stores the
+true effect sizes of perturbation-factor associations; when \code{offset=TRUE},
+\eqn{M+1} rows should be provided instead.}
+
 \item{K}{Number of factors to simulate}
 
 \item{M}{Number of perturbations to simulate}
 
-\item{beta_true}{A perturbation by factor numeric matrix that stores association}
+\item{pi_true}{The true density (proportion of nonzero gene loading) of each factor}
 
-\item{pi_true}{True sparsity of each factor}
+\item{G_prob}{The Bernoulli probability based on which the binary
+perturbation matrix \code{G} will be generated; determines the frequency
+of each perturbation in the sample population}
 
-\item{G_prob}{The Bernoulli probability based on which to generate the binary
-perturbation matrix G
-effect sizes;}
+\item{offset}{Default is FALSE. If TRUE, \code{beta_true} should have
+\eqn{M+1} rows, with the last row storing the intercept values \eqn{\beta_0}}
 }
 \value{
 A list object with the following elements:
@@ -48,5 +54,12 @@ the loading matrix.}
 }
 \description{
 Generate a binary perturbation matrix and a continuous gene
-expression matrix according to a factor model with normal noise terms.
+expression matrix in a bottom-up fashion according to a hierarchical factor
+model with normal noise terms.
+}
+\examples{
+set.seed(12345)
+beta_true <- rbind(c(1, 0, 0, 0, 0), c(0, 0.8, 0, 0, 0))
+sim_data <- normal_data_sim(N = 4000, P = 6000, beta_true = beta_true)
+
 }
