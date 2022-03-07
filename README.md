@@ -1,6 +1,6 @@
 # GSFA
 
-`GSFA` (Guided Sparse Factor Analysis) is an R package (accelerated by Rcpp) that 
+`GSFA` (Guided Sparse Factor Analysis) is an R package (accelerated by Rcpp) 
 that performs sparse factor analysis and differential gene expression discovery 
 simultaneously on single-cell RNA-seq with multiplexed CRISPR screen 
 (e.g. CROP-seq, Perturb-seq) data.

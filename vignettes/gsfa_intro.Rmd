@@ -54,7 +54,8 @@ That is, the 1st factor is associated with perturbation 1,
 and the 2nd factor associated with perturbation 2. 
 
 ```{r sim-data-normal}
-beta_true <- matrix(c(1, 0, 0, 0.8, 0, 0, 0, 0, 0, 0), ncol = 5)
+beta_true <- rbind(c(1, 0, 0, 0, 0), 
+                   c(0, 0.8, 0, 0, 0))
 sim_data <- normal_data_sim(N = 400, P = 600, K = 5, M = 2,
                             beta_true = beta_true,
                             pi_true = rep(0.1, 5),
@@ -63,15 +64,37 @@ sim_data <- normal_data_sim(N = 400, P = 600, K = 5, M = 2,
 
 ## Fit GSFA
 
-Run GSFA given the normal expression data and binary perturbation matrix:
+Now we perform GSFA on the given normal expression data and binary perturbation matrix 
+using `fit_gsfa_multivar()`.
+
+Below, 5 factors are specified in the model, Gibbs sampling is initialized with 
+truncated SVD for 1000 iterations, with the posterior means computed using the 
+last 500 iterations.
 
 ```{r fit-normal}
+fit0 <- fit_gsfa_multivar(Y = sim_data$Y, G = sim_data$G,
+                          K = 5, init.method = "svd",
+                          prior_w_s = 10, prior_w_r = 0.2,
+                          prior_beta_s = 5, prior_beta_r = 0.2,
+                          niter = 1000, used_niter = 500,
+                          verbose = T, return_samples = T)
+```
+
+If the option `return_samples = T`, one can inspect the traces of samples throughout 
+the iterations stored in `fit0$*_samples` slots.
+
+If the sampling chain does not seem to have converged, we can continue the Gibbs 
+sampling from the previous run by passing the previous fit object `fit0` to 
+`fit_gsfa_multivar()`. Below, the sampling is resumed for another 1000 iterations, 
+with the posterior means recomputed using the last 500 iterations.
+
+(Note that we no longer need to specify `k`, `init.method` and prior values this time.)
+
+```{r fit-normal-continue}
 fit <- fit_gsfa_multivar(Y = sim_data$Y, G = sim_data$G,
-                         K = 5, init.method = "svd",
-                         prior_w_s = 10, prior_w_r = 0.2,
-                         prior_beta_s = 5, prior_beta_r = 0.2,
+                         fit0 = fit0,
                          niter = 1000, used_niter = 500,
-                         verbose = T, return_samples = T)
+                         verbose = F, return_samples = T)
 ```
 
 ## Interpretation

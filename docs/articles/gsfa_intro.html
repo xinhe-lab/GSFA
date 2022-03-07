@@ -71,7 +71,7 @@
       <img src="" class="logo" alt=""><h1>Illustration of GSFA Application on Simulated Data</h1>
                         <h4 data-toc-skip class="author">Yifan Zhou</h4>
             
-            <h4 data-toc-skip class="date">2022-03-05</h4>
+            <h4 data-toc-skip class="date">2022-03-06</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/gradonion/GSFA/blob/HEAD/vignettes/gsfa_intro.Rmd" class="external-link"><code>vignettes/gsfa_intro.Rmd</code></a></small>
       <div class="d-none name"><code>gsfa_intro.Rmd</code></div>
@@ -113,7 +113,8 @@ The true association effects between factors and perturbations, <span class="mat
 <p>That is, the 1st factor is associated with perturbation 1, and the
 2nd factor associated with perturbation 2.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">beta_true</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0.8</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">beta_true</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, 
+                   <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.8</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>
 <span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normal_data_sim.html">normal_data_sim</a></span><span class="op">(</span>N <span class="op">=</span> <span class="fl">400</span>, P <span class="op">=</span> <span class="fl">600</span>, K <span class="op">=</span> <span class="fl">5</span>, M <span class="op">=</span> <span class="fl">2</span>,
                             beta_true <span class="op">=</span> <span class="va">beta_true</span>,
                             pi_true <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">5</span><span class="op">)</span>,
@@ -122,15 +123,18 @@ The true association effects between factors and perturbations, <span class="mat
 <div class="section level2">
 <h2 id="fit-gsfa">Fit GSFA<a class="anchor" aria-label="anchor" href="#fit-gsfa"></a>
 </h2>
-<p>Run GSFA given the normal expression data and binary perturbation
-matrix:</p>
+<p>Now we perform GSFA on the given normal expression data and binary
+perturbation matrix using <code><a href="../reference/fit_gsfa_multivar.html">fit_gsfa_multivar()</a></code>.</p>
+<p>Below, 5 factors are specified in the model, Gibbs sampling is
+initialized with truncated SVD for 1000 iterations, with the posterior
+means computed using the last 500 iterations.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_gsfa_multivar.html">fit_gsfa_multivar</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">Y</span>, G <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">G</span>,
-                         K <span class="op">=</span> <span class="fl">5</span>, init.method <span class="op">=</span> <span class="st">"svd"</span>,
-                         prior_w_s <span class="op">=</span> <span class="fl">10</span>, prior_w_r <span class="op">=</span> <span class="fl">0.2</span>,
-                         prior_beta_s <span class="op">=</span> <span class="fl">5</span>, prior_beta_r <span class="op">=</span> <span class="fl">0.2</span>,
-                         niter <span class="op">=</span> <span class="fl">1000</span>, used_niter <span class="op">=</span> <span class="fl">500</span>,
-                         verbose <span class="op">=</span> <span class="cn">T</span>, return_samples <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">fit0</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_gsfa_multivar.html">fit_gsfa_multivar</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">Y</span>, G <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">G</span>,
+                          K <span class="op">=</span> <span class="fl">5</span>, init.method <span class="op">=</span> <span class="st">"svd"</span>,
+                          prior_w_s <span class="op">=</span> <span class="fl">10</span>, prior_w_r <span class="op">=</span> <span class="fl">0.2</span>,
+                          prior_beta_s <span class="op">=</span> <span class="fl">5</span>, prior_beta_r <span class="op">=</span> <span class="fl">0.2</span>,
+                          niter <span class="op">=</span> <span class="fl">1000</span>, used_niter <span class="op">=</span> <span class="fl">500</span>,
+                          verbose <span class="op">=</span> <span class="cn">T</span>, return_samples <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></code></pre></div>
 <pre><code>Initializing Z and W with SVD.
 Iteration [50] finished.
 Iteration [100] finished.
@@ -152,6 +156,22 @@ Iteration [850] finished.
 Iteration [900] finished.
 Iteration [950] finished.
 Iteration [1000] finished.</code></pre>
+<p>If the option <code>return_samples = T</code>, one can inspect the
+traces of samples throughout the iterations stored in
+<code>fit0$*_samples</code> slots.</p>
+<p>If the sampling chain does not seem to have converged, we can
+continue the Gibbs sampling from the previous run by passing the
+previous fit object <code>fit0</code> to
+<code><a href="../reference/fit_gsfa_multivar.html">fit_gsfa_multivar()</a></code>. Below, the sampling is resumed for
+another 1000 iterations, with the posterior means recomputed using the
+last 500 iterations.</p>
+<p>(Note that we no longer need to specify <code>k</code>,
+<code>init.method</code> and prior values this time.)</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_gsfa_multivar.html">fit_gsfa_multivar</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">Y</span>, G <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">G</span>,
+                         fit0 <span class="op">=</span> <span class="va">fit0</span>,
+                         niter <span class="op">=</span> <span class="fl">1000</span>, used_niter <span class="op">=</span> <span class="fl">500</span>,
+                         verbose <span class="op">=</span> <span class="cn">F</span>, return_samples <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="interpretation">Interpretation<a class="anchor" aria-label="anchor" href="#interpretation"></a>
@@ -162,28 +182,28 @@ Iteration [1000] finished.</code></pre>
 <p>Note that factors are interchangeable, so their orders won’t
 necessarily match the original.</p>
 <p>The estimated associations between factors and perturbations are:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">posterior_means</span><span class="op">$</span><span class="va">beta_pm</span><span class="op">[</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">posterior_means</span><span class="op">$</span><span class="va">beta_pm</span><span class="op">)</span>, <span class="op">]</span>,
        digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
-<pre><code>   Factor_1 Factor_2 Factor_3 Factor_4 Factor_5
-1 -0.000763 -0.00157  -1.0100 -0.00283 -0.01080
-2 -0.005840  0.77400  -0.0145  0.00364 -0.00337</code></pre>
+<pre><code>  Factor_1 Factor_2 Factor_3 Factor_4 Factor_5
+1 -0.00112 -0.00274  -1.0200 -0.00343 -0.01090
+2 -0.00768  0.77100  -0.0148  0.00630 -0.00176</code></pre>
 <p>Factor 3 is associated with perturbation 1 with an absolute effect
 size of ~1.<br>
 Factor 2 is associated with perturbation 2 with an absolute effect size
 of ~0.8.</p>
 <p>The PIPs (posterior inclusion probability, a measurement of
 certainty) of associations between factors and perturbations are:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">posterior_means</span><span class="op">$</span><span class="va">Gamma_pm</span><span class="op">[</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">posterior_means</span><span class="op">$</span><span class="va">Gamma_pm</span><span class="op">)</span>, <span class="op">]</span>,
        digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
 <pre><code>  Factor_1 Factor_2 Factor_3 Factor_4 Factor_5
-1    0.022    0.034    1.000    0.042    0.056
-2    0.066    1.000    0.102    0.056    0.044</code></pre>
+1     0.04    0.042    1.000    0.032    0.080
+2     0.07    1.000    0.096    0.060    0.048</code></pre>
 <p>Associations with high certainty are:<br>
 Factor 3 ~ Perturbation 1 and Factor 2 ~ Perturbation 2.</p>
 <p>Visualization of perturbation effects on factors:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/dotplot_beta_PIP.html">dotplot_beta_PIP</a></span><span class="op">(</span><span class="va">fit</span>, target_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Perturbation 1"</span>, <span class="st">"Perturbation 2"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="gsfa_intro_files/figure-html/unnamed-chunk-2-1.png" width="576" style="display: block; margin: auto;"></p>
 </div>
@@ -193,10 +213,10 @@ Factor 3 ~ Perturbation 1 and Factor 2 ~ Perturbation 2.</p>
 <p>Genes with non-zero loading on factors can be obtained by
 thresholding the gene PIP.</p>
 <p>For example, non-zero genes in factor 2 are:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">est_genes_factor2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">posterior_means</span><span class="op">$</span><span class="va">F_pm</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">0.95</span><span class="op">)</span></code></pre></div>
 <p>Compare with genes truly in factor 2:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">true_genes_factor2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="cn">F</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span>
 <span class="va">num_olap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">est_genes_factor2</span>, <span class="va">true_genes_factor2</span><span class="op">)</span><span class="op">)</span>
 <span class="co"># Sensitivity:</span>
@@ -215,7 +235,7 @@ thresholding the gene PIP.</p>
 LFSR.</p>
 <p>DEGs detected under Perturbation 1 and the sensitivity and
 specificity of discovery:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">genes_detected1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">lfsr</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes_detected1</span><span class="op">)</span>, <span class="st">" genes passed LFSR &lt; 0.05."</span><span class="op">)</span><span class="op">)</span>
 
@@ -232,7 +252,7 @@ specificity of discovery:</p>
 [1] "Specificity: 1"</code></pre>
 <p>DEGs detected under Perturbation 2 and the sensitivity and
 specificity of discovery:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">genes_detected2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">lfsr</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes_detected2</span><span class="op">)</span>, <span class="st">" genes passed LFSR &lt; 0.05."</span><span class="op">)</span><span class="op">)</span>
 
@@ -249,7 +269,7 @@ specificity of discovery:</p>
 [1] "Specificity: 1"</code></pre>
 <p>Visualization of the total effects each perturbation has on selected
 genes:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/dotplot_total_effect.html">dotplot_total_effect</a></span><span class="op">(</span><span class="va">fit</span>,
                      gene_indices <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">12</span>, <span class="fl">14</span>, <span class="fl">88</span>, <span class="fl">89</span>, <span class="fl">91</span>, <span class="fl">123</span><span class="op">)</span>,
                      target_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Perturbation 1"</span>, <span class="st">"Perturbation 2"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
@@ -259,7 +279,7 @@ genes:</p>
 <div class="section level2">
 <h2 id="session-information">Session information<a class="anchor" aria-label="anchor" href="#session-information"></a>
 </h2>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <pre><code>R version 4.1.2 (2021-11-01)
 Platform: aarch64-apple-darwin20 (64-bit)
