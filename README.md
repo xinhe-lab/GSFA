@@ -50,6 +50,9 @@ install.packages("devtools")
 devtools::install_github("gradonion/GSFA", build_vignettes = TRUE)
 ```
 
+Note that installing the package will require a C++ compiler setup that is 
+appropriate for the version of R installed on your computer.
+
 ### Source
 
 If you have cloned the repository locally, you can install the package with the 
@@ -65,13 +68,19 @@ appropriate for the version of R installed on your computer.
 
 ### Docker
 
-This R package and its C++ dependencies have all been containerized in a docker image. Run the code below to pull the docker image of the release version of `GSFA`. For more details, please see `Dockerfile` in this repository. 
+If you are familiar with Docker, this R package and all its C++ and R dependencies 
+have been containerized in a docker image. Run the code below to pull the docker 
+image of the release version of `GSFA`. For more details on the dependencies, 
+please see `Dockerfile` in this repository. 
 
 ```
 docker pull gradonion/gsfa:latest
 ```
 
-Once pulled, run the docker image and execute it in interactive mode to execute the vignettes or your own analysis. At the current time, there is no RStudio Server support in the docker image above, and will be adding it in the near future.
+Once pulled, run the docker image (`docker run`) and execute it in interactive 
+mode (`docker exec -it $CONTAINER_ID bash`) to run the vignettes or your own 
+analysis. At the current time, there is no RStudio Server support in the docker 
+image provided, but it will be added in the near future.
 
 ## Using the package
 
