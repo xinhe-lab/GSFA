@@ -41,16 +41,20 @@ under the terms of the [MIT license][mit-license].
 
 ## Installation
 
-To install the development version of the `GSFA` package from Github, run:
+### Github
+
+To install the development version of the `GSFA` package from Github, run this in R:
 
 ```R
 install.packages("devtools")
 devtools::install_github("gradonion/GSFA", build_vignettes = TRUE)
 ```
 
+### Source
+
 If you have cloned the repository locally, you can install the package with the 
 `install_local` function from devtools. Assuming you are in the local GSFA repository, 
-run this code to install the package:
+run this code in R to install the package:
 
 ```R
 devtools::install_local(build_vignettes = TRUE)
@@ -58,6 +62,16 @@ devtools::install_local(build_vignettes = TRUE)
 
 Note that installing the package will require a C++ compiler setup that is 
 appropriate for the version of R installed on your computer.
+
+### Docker
+
+This R package and its C++ dependencies have all been containerized in a docker image. Run the code below to pull the docker image of the release version of `GSFA`. For more details, please see `Dockerfile` in this repository. 
+
+```
+docker pull gradonion/gsfa:latest
+```
+
+Once pulled, run the docker image and execute it in interactive mode to execute the vignettes or your own analysis. At the current time, there is no RStudio Server support in the docker image above, and will be adding it in the near future.
 
 ## Using the package
 
