@@ -69,18 +69,26 @@ appropriate for the version of R installed on your computer.
 ### Docker
 
 If you are familiar with Docker, this R package and all its C++ and R dependencies 
-have been containerized in a docker image. Run the code below to pull the docker 
-image of the release version of `GSFA`. For more details on the dependencies, 
-please see `Dockerfile` in this repository. 
+built on `debian stable` have been containerized in a docker image. Run the code 
+below to pull the docker image of the release version of `GSFA`. 
+For more details on the dependencies, please see `Dockerfile` in this repository. 
 
 ```
 docker pull gradonion/gsfa:latest
 ```
 
-Once pulled, run the docker image (`docker run`) and execute it in interactive 
-mode (`docker exec -it $CONTAINER_ID bash`) to run the vignettes or your own 
-analysis. At the current time, there is no RStudio Server support in the docker 
-image provided, but it will be added in the near future.
+Once pulled, run the docker image (by modifying the `docker run` command below) 
+and launch RStudio Server locally at [localhost:8787](localhost:8787) to run 
+the vignettes or your own analyses.
+
+```
+docker run \
+    -d \
+    -e DISABLE_AUTH=true \
+    -v /your_local_directory/:/home/rstudio/projects/ \
+    -p 8787:8787 \
+    gradonion/gsfa:latest
+```
 
 ## Using the package
 
