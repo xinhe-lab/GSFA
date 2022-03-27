@@ -238,9 +238,15 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
                                                niter, ave_niter, prior_type);
   // Compute local false sign rate for each perturbation-gene pair and each of the sample groups:
   mat lfsr0_mat(P,M);
-  lfsr0_mat = compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+  mat total_effect0 = zeros<mat>(P,M);
+  compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx,
+                   lfsr0_mat, total_effect0,
+                   lfsr_niter, prior_type);
   mat lfsr1_mat(P,M);
-  lfsr1_mat = compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+  mat total_effect1 = zeros<mat>(P,M);
+  compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx,
+                   lfsr1_mat, total_effect1,
+                   lfsr_niter, prior_type);
 
   // CONSTRUCT OUTPUT
   // ----------------------------------------------------------
@@ -249,7 +255,9 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr0") = lfsr0_mat,
+                        Named("total_effect0") = total_effect0,
                         Named("lfsr1") = lfsr1_mat,
+                        Named("total_effect1") = total_effect1,
                         Named("Z_samples") = Z_mtx,
                         Named("F_samples") = F_mtx,
                         Named("W_samples") = W_mtx,
@@ -268,7 +276,9 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr0") = lfsr0_mat,
+                        Named("total_effect0") = total_effect0,
                         Named("lfsr1") = lfsr1_mat,
+                        Named("total_effect1") = total_effect1,
                         Named("prior_params") = prior_params,
                         Named("prior_type") = prior_type);
   }
@@ -449,10 +459,15 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
                                                niter, ave_niter, prior_type);
   // Compute local false sign rate for each perturbation-gene pair and each of the sample groups:
   mat lfsr0_mat(P,M);
-  lfsr0_mat = compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+  mat total_effect0 = zeros<mat>(P,M);
+  compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx,
+                   lfsr0_mat, total_effect0,
+                   lfsr_niter, prior_type);
   mat lfsr1_mat(P,M);
-  lfsr1_mat = compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
-
+  mat total_effect1 = zeros<mat>(P,M);
+  compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx,
+                   lfsr1_mat, total_effect1,
+                   lfsr_niter, prior_type);
   // CONSTRUCT OUTPUT
   // ----------------------------------------------------------
   if (return_samples) {
@@ -460,7 +475,9 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr0") = lfsr0_mat,
+                        Named("total_effect0") = total_effect0,
                         Named("lfsr1") = lfsr1_mat,
+                        Named("total_effect1") = total_effect1,
                         Named("Z_samples") = Z_mtx,
                         Named("F_samples") = F_mtx,
                         Named("W_samples") = W_mtx,
@@ -479,7 +496,9 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr0") = lfsr0_mat,
+                        Named("total_effect0") = total_effect0,
                         Named("lfsr1") = lfsr1_mat,
+                        Named("total_effect1") = total_effect1,
                         Named("prior_params") = prior_params,
                         Named("prior_type") = prior_type);
   }

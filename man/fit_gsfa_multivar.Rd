@@ -9,6 +9,8 @@ fit_gsfa_multivar(
   G,
   K,
   fit0,
+  use_neg_control = FALSE,
+  neg_control_index = NULL,
   prior_type = c("mixture_normal", "spike_slab"),
   init.method = c("svd", "random"),
   prior_w_s = 50,
@@ -36,6 +38,12 @@ and \code{fit0} is needed;}
 \item{fit0}{A list of class 'gsfa_fit' that is obtained from a previous
 \code{fit_gsfa_multivar} run, so that more iterations of Gibbs sampling
 can continue from the last updates in it;}
+
+\item{use_neg_control}{Boolean indicator of whether estimated effects should be
+calibrated using negative control effects as baseline instead of 0;}
+
+\item{neg_control_index}{Required when \code{use_neg_control} is \code{TRUE},
+an integer from 1 to the total number of perturbation groups in \code{G};}
 
 \item{prior_type}{Type of sparse prior used on gene weights, can be "mixture_normal"
 or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;}

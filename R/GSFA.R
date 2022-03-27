@@ -12,6 +12,10 @@
 #' @param fit0 A list of class 'gsfa_fit' that is obtained from a previous
 #' \code{fit_gsfa_multivar} run, so that more iterations of Gibbs sampling
 #' can continue from the last updates in it;
+#' @param use_neg_control Boolean indicator of whether estimated effects should be
+#' calibrated using negative control effects as baseline instead of 0;
+#' @param neg_control_index Required when \code{use_neg_control} is \code{TRUE},
+#' an integer from 1 to the total number of perturbation groups in \code{G};
 #' @param prior_type Type of sparse prior used on gene weights, can be "mixture_normal"
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
 #' @param init.method Method to initialize the factors, can be one of
@@ -37,6 +41,7 @@
 #' fit1 <- fit_gsfa_multivar(Y, G, fit0 = fit0, niter = 500, used_niter = 200)
 #' }
 fit_gsfa_multivar <- function(Y, G, K, fit0,
+                              use_neg_control = FALSE, neg_control_index = NULL,
                               prior_type = c("mixture_normal", "spike_slab"),
                               init.method = c("svd", "random"),
                               prior_w_s = 50, prior_w_r = 0.2,
@@ -65,8 +70,24 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
          "or a Gibbs initialization, \"fit0\", but not both.")
   }
 
+  if (use_neg_control){
+    print("Estimated effects are going to be calibrated against negative control.")
+    if (neg_control_index %in% 1:(ncol(G)-1)){
+      print(paste0("Using the ", neg_control_index,
+                   "-th perturbation group as negative control."))
+      # Adjust for 0-based index in cpp
+      neg_control_index <- neg_control_index - 1
+    } else {
+      stop("Please provide a valid negative control index, should be an integer",
+           " from 1 to the total number of perturbation groups in \"G\".")
+    }
+  } else {
+    neg_control_index <- 0
+  }
   if (missing(fit0)){
     fit <- gsfa_gibbs_cpp(Y = Y, G = G, K = K,
+                          neg_ctrl_index = neg_control_index,
+                          use_ctrl = use_neg_control,
                           prior_type = prior_type,
                           initialize = init.method,
                           prior_s = prior_w_s, prior_r = prior_w_r,
@@ -93,6 +114,8 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
                                   sigma_b2 = fit0$updates$sigma_b2,
                                   c2 = fit0$updates$c2,
                                   prior_params = fit0$prior_params,
+                                  neg_ctrl_index = neg_control_index,
+                                  use_ctrl = use_neg_control,
                                   prior_type = prior_type,
                                   niter = niter,
                                   ave_niter = used_niter,
@@ -130,6 +153,8 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
   colnames(fit$posterior_means$beta_pm) <- factor_names
   rownames(fit$lfsr) <- gene_names
   colnames(fit$lfsr) <- c(perturbation_names, "offset")
+  rownames(fit$total_effect) <- gene_names
+  colnames(fit$total_effect) <- c(perturbation_names, "offset")
   class(fit) <- c("gsfa_fit", "list")
   return(fit)
 }

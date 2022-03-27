@@ -82,7 +82,10 @@ Rcpp::List compute_posterior_mean_2groups_cpp(arma::cube Gamma0_mtx, arma::cube 
                                               int niter, int ave_niter,
                                               Rcpp::String prior_type);
 
-arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
-                           int use_niter, Rcpp::String prior_type);
+void compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
+                      arma::mat& lfsr_mat, arma::mat& total_effect,
+                      int use_niter, Rcpp::String prior_type);
+
+arma::cube calibrate_beta_vs_negctrl(arma::cube beta_mtx, int neg_ctrl_index);
 
 #endif

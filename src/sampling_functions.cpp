@@ -560,14 +560,14 @@ List compute_posterior_mean_2groups_cpp(arma::cube Gamma0_mtx, arma::cube beta0_
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
-                           int use_niter=100, String prior_type="mixture_normal"){
+void compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
+                      arma::mat& lfsr_mat, arma::mat& total_effect,
+                      int use_niter, String prior_type="mixture_normal"){
   int M = beta_mtx.n_rows;
   int K = beta_mtx.n_cols;
   int P = W_mtx.n_rows;
   int niter = W_mtx.n_slices;
 
-  mat lfsr_mat = zeros<mat>(P,M);
   mat beta_m = zeros<mat>(K,niter);
   mat W_j = zeros<mat>(K,niter);
   mat F_j = zeros<mat>(K,niter);
@@ -584,11 +584,28 @@ arma::mat compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_m
         int slice_indx = niter-use_niter+i;
         bw_prod(i) = sum(W_j.col(slice_indx) % beta_m.col(slice_indx));
       }
+      total_effect(j,m) = sum(bw_prod) / double(use_niter);
       vec sign_count(2);
       sign_count(0) = sum(bw_prod <= 0);
       sign_count(1) = sum(bw_prod >= 0);
       lfsr_mat(j,m) = sign_count.min() / double(use_niter);
     }
   }
-  return lfsr_mat;
+}
+
+// [[Rcpp::depends("RcppArmadillo")]]
+// [[Rcpp::export]]
+arma::cube calibrate_beta_vs_negctrl(arma::cube beta_mtx, int neg_ctrl_index){
+  int M = beta_mtx.n_rows;
+  int K = beta_mtx.n_cols;
+  int niter = beta_mtx.n_slices;
+
+  cube beta_adjusted = zeros<cube>(M,K,niter+1);
+  mat beta_m = zeros<mat>(K,niter);
+  mat neg_ctrl_beta = beta_mtx.row(neg_ctrl_index);
+  for (int m=0; m<M; m++){
+    beta_m = beta_mtx.row(m);
+    beta_adjusted.row(m) = beta_m - neg_ctrl_beta;
+  }
+  return beta_adjusted;
 }

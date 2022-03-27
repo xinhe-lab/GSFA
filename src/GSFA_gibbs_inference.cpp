@@ -28,6 +28,8 @@ using namespace arma;
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
+                    int neg_ctrl_index,
+                    bool use_ctrl=false,
                     String prior_type="mixture_normal",
                     String initialize="svd",
                     double prior_s=50, double prior_r=0.2,
@@ -185,16 +187,34 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                              Named("sigma_w2") = sigma_w2, Named("sigma_b2") = sigma_b2,
                              Named("c2") = c2,
                              Named("niter") = niter, Named("used_niter") = ave_niter);
-  // Compute the posterior means:
-  List pm_list;
-  pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
-                                       pi_beta_mtx, Z_mtx,
-                                       F_mtx, W_mtx,
-                                       pi_mtx, sigma_w2_mtx, c2_mtx,
-                                       niter, ave_niter, prior_type);
-  // Compute local false sign rate for each perturbation-gene pair:
+  // Local false sign rate for each perturbation-gene pair:
   mat lfsr_mat(P,M);
-  lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+  mat total_effect = zeros<mat>(P,M);
+  // The posterior means of parameters:
+  List pm_list;
+
+  if (use_ctrl){
+    Rprintf("Calibrating effect sizes using the negative control as baseline.");
+    cube beta_adjusted = zeros<cube>(M,K,niter+1);
+    beta_adjusted = calibrate_beta_vs_negctrl(beta_mtx, neg_ctrl_index);
+    compute_lfsr_cpp(beta_adjusted, W_mtx, F_mtx,
+                     lfsr_mat, total_effect,
+                     lfsr_niter, prior_type);
+    pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_adjusted,
+                                         pi_beta_mtx, Z_mtx,
+                                         F_mtx, W_mtx,
+                                         pi_mtx, sigma_w2_mtx, c2_mtx,
+                                         niter, ave_niter, prior_type);
+  } else {
+    compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx,
+                     lfsr_mat, total_effect,
+                     lfsr_niter, prior_type);
+    pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
+                                         pi_beta_mtx, Z_mtx,
+                                         F_mtx, W_mtx,
+                                         pi_mtx, sigma_w2_mtx, c2_mtx,
+                                         niter, ave_niter, prior_type);
+  }
 
   // CONSTRUCT OUTPUT
   // ----------------------------------------------------------
@@ -203,6 +223,7 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr") = lfsr_mat,
+                        Named("total_effect") = total_effect,
                         Named("Z_samples") = Z_mtx,
                         Named("F_samples") = F_mtx,
                         Named("W_samples") = W_mtx,
@@ -218,6 +239,7 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr") = lfsr_mat,
+                        Named("total_effect") = total_effect,
                         Named("prior_params") = prior_params,
                         Named("prior_type") = prior_type);
   }
@@ -233,6 +255,8 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
                             arma::vec psi, arma::vec sigma_w2, arma::vec sigma_b2,
                             arma::vec c2,
                             List prior_params,
+                            int neg_ctrl_index,
+                            bool use_ctrl=false,
                             String prior_type="mixture_normal",
                             int niter=500, int ave_niter=200, int lfsr_niter=200,
                             bool verbose=true, bool return_samples=true){
@@ -347,16 +371,33 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
                              Named("sigma_w2") = sigma_w2, Named("sigma_b2") = sigma_b2,
                              Named("c2") = c2,
                              Named("niter") = niter, Named("used_niter") = ave_niter);
-  // Compute the posterior means:
-  List pm_list;
-  pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
-                                       pi_beta_mtx, Z_mtx,
-                                       F_mtx, W_mtx,
-                                       pi_mtx, sigma_w2_mtx, c2_mtx,
-                                       niter, ave_niter, prior_type);
-  // Compute local false sign rate for each perturbation-gene pair:
+  // Local false sign rate for each perturbation-gene pair:
   mat lfsr_mat(P,M);
-  lfsr_mat = compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx, lfsr_niter, prior_type);
+  mat total_effect = zeros<mat>(P,M);
+  // The posterior means of parameters:
+  List pm_list;
+  if (use_ctrl){
+    Rprintf("Calibrating effect sizes using the negative control as baseline.");
+    cube beta_adjusted = zeros<cube>(M,K,niter+1);
+    beta_adjusted = calibrate_beta_vs_negctrl(beta_mtx, neg_ctrl_index);
+    compute_lfsr_cpp(beta_adjusted, W_mtx, F_mtx,
+                     lfsr_mat, total_effect,
+                     lfsr_niter, prior_type);
+    pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_adjusted,
+                                         pi_beta_mtx, Z_mtx,
+                                         F_mtx, W_mtx,
+                                         pi_mtx, sigma_w2_mtx, c2_mtx,
+                                         niter, ave_niter, prior_type);
+  } else {
+    compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx,
+                     lfsr_mat, total_effect,
+                     lfsr_niter, prior_type);
+    pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
+                                         pi_beta_mtx, Z_mtx,
+                                         F_mtx, W_mtx,
+                                         pi_mtx, sigma_w2_mtx, c2_mtx,
+                                         niter, ave_niter, prior_type);
+  }
 
   // CONSTRUCT OUTPUT
   // ----------------------------------------------------------
@@ -365,6 +406,7 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr") = lfsr_mat,
+                        Named("total_effect") = total_effect,
                         Named("Z_samples") = Z_mtx,
                         Named("F_samples") = F_mtx,
                         Named("W_samples") = W_mtx,
@@ -380,6 +422,7 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
                         Named("lfsr") = lfsr_mat,
+                        Named("total_effect") = total_effect,
                         Named("prior_params") = prior_params,
                         Named("prior_type") = prior_type);
   }
