@@ -194,21 +194,28 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   List pm_list;
 
   if (use_ctrl){
-    Rprintf("Calibrating effect sizes using the negative control as baseline.");
+    Rprintf("Calibrating effect sizes using the negative control as baseline.\n");
     cube beta_adjusted = zeros<cube>(M,K,niter+1);
     beta_adjusted = calibrate_beta_vs_negctrl(beta_mtx, neg_ctrl_index);
+
+    Rprintf("Computing total effects for each perturbation-gene pair.\n");
     compute_lfsr_cpp(beta_adjusted, W_mtx, F_mtx,
                      lfsr_mat, total_effect,
                      lfsr_niter, prior_type);
+
+    Rprintf("Computing posterior means of parameters.\n");
     pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_adjusted,
                                          pi_beta_mtx, Z_mtx,
                                          F_mtx, W_mtx,
                                          pi_mtx, sigma_w2_mtx, c2_mtx,
                                          niter, ave_niter, prior_type);
   } else {
+    Rprintf("Computing total effects for each perturbation-gene pair.\n");
     compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx,
                      lfsr_mat, total_effect,
                      lfsr_niter, prior_type);
+
+    Rprintf("Computing posterior means of parameters.\n");
     pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
                                          pi_beta_mtx, Z_mtx,
                                          F_mtx, W_mtx,
@@ -377,21 +384,28 @@ List restart_gsfa_gibbs_cpp(arma::mat Y, arma::mat G,
   // The posterior means of parameters:
   List pm_list;
   if (use_ctrl){
-    Rprintf("Calibrating effect sizes using the negative control as baseline.");
+    Rprintf("Calibrating effect sizes using the negative control as baseline.\n");
     cube beta_adjusted = zeros<cube>(M,K,niter+1);
     beta_adjusted = calibrate_beta_vs_negctrl(beta_mtx, neg_ctrl_index);
+
+    Rprintf("Computing total effects for each perturbation-gene pair.\n");
     compute_lfsr_cpp(beta_adjusted, W_mtx, F_mtx,
                      lfsr_mat, total_effect,
                      lfsr_niter, prior_type);
+
+    Rprintf("Computing posterior means of parameters.\n");
     pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_adjusted,
                                          pi_beta_mtx, Z_mtx,
                                          F_mtx, W_mtx,
                                          pi_mtx, sigma_w2_mtx, c2_mtx,
                                          niter, ave_niter, prior_type);
   } else {
+    Rprintf("Computing total effects for each perturbation-gene pair.\n");
     compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx,
                      lfsr_mat, total_effect,
                      lfsr_niter, prior_type);
+
+    Rprintf("Computing posterior means of parameters.\n");
     pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
                                          pi_beta_mtx, Z_mtx,
                                          F_mtx, W_mtx,

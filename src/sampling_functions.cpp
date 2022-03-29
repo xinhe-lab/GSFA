@@ -600,7 +600,7 @@ arma::cube calibrate_beta_vs_negctrl(arma::cube beta_mtx, int neg_ctrl_index){
   int K = beta_mtx.n_cols;
   int niter = beta_mtx.n_slices;
 
-  cube beta_adjusted = zeros<cube>(M,K,niter+1);
+  cube beta_adjusted = zeros<cube>(M,K,niter);
   mat beta_m = zeros<mat>(K,niter);
   mat neg_ctrl_beta = beta_mtx.row(neg_ctrl_index);
   for (int m=0; m<M; m++){
