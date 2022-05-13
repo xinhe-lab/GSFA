@@ -188,8 +188,9 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                              Named("c2") = c2,
                              Named("niter") = niter, Named("used_niter") = ave_niter);
   // Local false sign rate for each perturbation-gene pair:
-  mat lfsr_mat(P,M);
-  mat total_effect = zeros<mat>(P,M);
+  // mat lfsr_mat(P,M);
+  // mat total_effect = zeros<mat>(P,M);
+  List total_effect_list;
   // The posterior means of parameters:
   List pm_list;
 
@@ -199,9 +200,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     beta_adjusted = calibrate_beta_vs_negctrl(beta_mtx, neg_ctrl_index);
 
     Rprintf("Computing total effects for each perturbation-gene pair.\n");
-    compute_lfsr_cpp(beta_adjusted, W_mtx, F_mtx,
-                     lfsr_mat, total_effect,
-                     lfsr_niter, prior_type);
+    total_effect_list = compute_lfsr_cpp_new(beta_adjusted, W_mtx, F_mtx,
+                                         lfsr_niter, prior_type);
 
     Rprintf("Computing posterior means of parameters.\n");
     pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_adjusted,
@@ -211,9 +211,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
                                          niter, ave_niter, prior_type);
   } else {
     Rprintf("Computing total effects for each perturbation-gene pair.\n");
-    compute_lfsr_cpp(beta_mtx, W_mtx, F_mtx,
-                     lfsr_mat, total_effect,
-                     lfsr_niter, prior_type);
+    total_effect_list = compute_lfsr_cpp_new(beta_mtx, W_mtx, F_mtx,
+                                         lfsr_niter, prior_type);
 
     Rprintf("Computing posterior means of parameters.\n");
     pm_list = compute_posterior_mean_cpp(Gamma_mtx, beta_mtx,
@@ -229,8 +228,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     // Save samples at each iteration on top of everything else:
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
-                        Named("lfsr") = lfsr_mat,
-                        Named("total_effect") = total_effect,
+                        Named("lfsr") = total_effect_list["lfsr"],// lfsr_mat,
+                        Named("total_effect") = total_effect_list["total_effect"],// total_effect,
                         Named("Z_samples") = Z_mtx,
                         Named("F_samples") = F_mtx,
                         Named("W_samples") = W_mtx,
@@ -245,8 +244,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   } else {
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
-                        Named("lfsr") = lfsr_mat,
-                        Named("total_effect") = total_effect,
+                        Named("lfsr") = total_effect_list["lfsr"],// lfsr_mat,
+                        Named("total_effect") = total_effect_list["total_effect"],// total_effect,
                         Named("prior_params") = prior_params,
                         Named("prior_type") = prior_type);
   }

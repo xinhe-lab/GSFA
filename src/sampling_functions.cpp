@@ -595,6 +595,44 @@ void compute_lfsr_cpp(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
+List compute_lfsr_cpp_new(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx,
+                          int use_niter, String prior_type="mixture_normal"){
+  int M = beta_mtx.n_rows;
+  int K = beta_mtx.n_cols;
+  int P = W_mtx.n_rows;
+  int niter = W_mtx.n_slices;
+  mat lfsr_mat = zeros<mat>(P,M);
+  mat total_effect = zeros<mat>(P,M);
+
+  mat beta_m = zeros<mat>(K,niter);
+  mat W_j = zeros<mat>(K,niter);
+  mat F_j = zeros<mat>(K,niter);
+  for (int m=0; m<M; m++){
+    beta_m = beta_mtx.row(m);
+    for (int j=0; j<P; j++){
+      W_j = W_mtx.row(j);
+      if (prior_type=="mixture_normal") {
+        F_j = F_mtx.row(j);
+        W_j = W_j % F_j; // Set W to zero if F=0 under the normal-mixture prior
+      }
+      vec bw_prod(use_niter);
+      for (int i=0; i<use_niter; i++){
+        int slice_indx = niter-use_niter+i;
+        bw_prod(i) = sum(W_j.col(slice_indx) % beta_m.col(slice_indx));
+      }
+      total_effect(j,m) = sum(bw_prod) / double(use_niter);
+      vec sign_count(2);
+      sign_count(0) = sum(bw_prod <= 0);
+      sign_count(1) = sum(bw_prod >= 0);
+      lfsr_mat(j,m) = sign_count.min() / double(use_niter);
+    }
+  }
+  return List::create(Named("lfsr") = lfsr_mat,
+                      Named("total_effect") = total_effect);
+}
+
+// [[Rcpp::depends("RcppArmadillo")]]
+// [[Rcpp::export]]
 arma::cube calibrate_beta_vs_negctrl(arma::cube beta_mtx, int neg_ctrl_index){
   int M = beta_mtx.n_rows;
   int K = beta_mtx.n_cols;
