@@ -471,21 +471,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// compute_lfsr_cpp_new
-List compute_lfsr_cpp_new(arma::cube beta_mtx, arma::cube W_mtx, arma::cube F_mtx, int use_niter, String prior_type);
-RcppExport SEXP _GSFA_compute_lfsr_cpp_new(SEXP beta_mtxSEXP, SEXP W_mtxSEXP, SEXP F_mtxSEXP, SEXP use_niterSEXP, SEXP prior_typeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::cube >::type beta_mtx(beta_mtxSEXP);
-    Rcpp::traits::input_parameter< arma::cube >::type W_mtx(W_mtxSEXP);
-    Rcpp::traits::input_parameter< arma::cube >::type F_mtx(F_mtxSEXP);
-    Rcpp::traits::input_parameter< int >::type use_niter(use_niterSEXP);
-    Rcpp::traits::input_parameter< String >::type prior_type(prior_typeSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_lfsr_cpp_new(beta_mtx, W_mtx, F_mtx, use_niter, prior_type));
-    return rcpp_result_gen;
-END_RCPP
-}
 // calibrate_beta_vs_negctrl
 arma::cube calibrate_beta_vs_negctrl(arma::cube beta_mtx, int neg_ctrl_index);
 RcppExport SEXP _GSFA_calibrate_beta_vs_negctrl(SEXP beta_mtxSEXP, SEXP neg_ctrl_indexSEXP) {
@@ -524,7 +509,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_GSFA_compute_posterior_mean_cpp", (DL_FUNC) &_GSFA_compute_posterior_mean_cpp, 12},
     {"_GSFA_compute_posterior_mean_2groups_cpp", (DL_FUNC) &_GSFA_compute_posterior_mean_2groups_cpp, 15},
     {"_GSFA_compute_lfsr_cpp", (DL_FUNC) &_GSFA_compute_lfsr_cpp, 7},
-    {"_GSFA_compute_lfsr_cpp_new", (DL_FUNC) &_GSFA_compute_lfsr_cpp_new, 5},
     {"_GSFA_calibrate_beta_vs_negctrl", (DL_FUNC) &_GSFA_calibrate_beta_vs_negctrl, 2},
     {NULL, NULL, 0}
 };

@@ -97,10 +97,6 @@ compute_lfsr_cpp <- function(beta_mtx, W_mtx, F_mtx, lfsr_mat, total_effect, use
     invisible(.Call('_GSFA_compute_lfsr_cpp', PACKAGE = 'GSFA', beta_mtx, W_mtx, F_mtx, lfsr_mat, total_effect, use_niter, prior_type))
 }
 
-compute_lfsr_cpp_new <- function(beta_mtx, W_mtx, F_mtx, use_niter, prior_type = "mixture_normal") {
-    .Call('_GSFA_compute_lfsr_cpp_new', PACKAGE = 'GSFA', beta_mtx, W_mtx, F_mtx, use_niter, prior_type)
-}
-
 calibrate_beta_vs_negctrl <- function(beta_mtx, neg_ctrl_index) {
     .Call('_GSFA_calibrate_beta_vs_negctrl', PACKAGE = 'GSFA', beta_mtx, neg_ctrl_index)
 }
