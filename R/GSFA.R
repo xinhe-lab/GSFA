@@ -82,7 +82,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
            " from 1 to the total number of perturbation groups in \"G\".")
     }
   } else {
-    neg_control_index <- 0
+    neg_control_index <- -1
   }
   if (missing(fit0)){
     fit <- gsfa_gibbs_cpp(Y = Y, G = G, K = K,
@@ -202,6 +202,7 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' fit1 <- fit_gsfa_multivar_2groups(Y, G, group, fit0 = fit0, niter = 500, used_niter = 200)
 #' }
 fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
+                                      use_neg_control = FALSE, neg_control_index = NULL,
                                       prior_type = c("mixture_normal", "spike_slab"),
                                       init.method = c("svd", "random"),
                                       prior_w_s = 50, prior_w_r = 0.2,
@@ -254,9 +255,25 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
          "or a Gibbs initialization, \"fit0\", but not both.")
   }
 
+  if (use_neg_control){
+    print("Estimated effects are going to be calibrated against negative control.")
+    if (neg_control_index %in% 1:(ncol(G)-1)){
+      print(paste0("Using the ", neg_control_index,
+                   "-th perturbation group as negative control."))
+      # Adjust for 0-based index in cpp
+      neg_control_index <- neg_control_index - 1
+    } else {
+      stop("Please provide a valid negative control index, should be an integer",
+           " from 1 to the total number of perturbation groups in \"G\".")
+    }
+  } else {
+    neg_control_index <- -1
+  }
   if (missing(fit0)){
     fit <- gsfa_gibbs_2groups_cpp(Y = Y, G = G,
                                   group = numeric_group, K = K,
+                                  neg_ctrl_index = neg_control_index,
+                                  use_ctrl = use_neg_control,
                                   prior_type = prior_type,
                                   initialize = init.method,
                                   prior_s = prior_w_s, prior_r = prior_w_r,
@@ -284,6 +301,8 @@ fit_gsfa_multivar_2groups <- function(Y, G, group, K, fit0,
                                      sigma_b20 = fit0$updates$sigma_b20, sigma_b21 = fit0$updates$sigma_b21,
                                      c2 = fit0$updates$c2,
                                      prior_params = fit0$prior_params,
+                                     neg_ctrl_index = neg_control_index,
+                                     use_ctrl = use_neg_control,
                                      prior_type = prior_type,
                                      niter = niter,
                                      ave_niter = used_niter,

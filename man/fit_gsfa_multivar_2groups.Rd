@@ -10,6 +10,8 @@ fit_gsfa_multivar_2groups(
   group,
   K,
   fit0,
+  use_neg_control = FALSE,
+  neg_control_index = NULL,
   prior_type = c("mixture_normal", "spike_slab"),
   init.method = c("svd", "random"),
   prior_w_s = 50,

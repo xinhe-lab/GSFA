@@ -190,7 +190,6 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
   // Local false sign rate for each perturbation-gene pair:
   mat lfsr_mat = zeros<mat>(P,M);
   mat total_effect = zeros<mat>(P,M);
-  List total_effect_list;
   // The posterior means of parameters:
   List pm_list;
 
@@ -230,8 +229,8 @@ List gsfa_gibbs_cpp(arma::mat Y, arma::mat G, int K,
     // Save samples at each iteration on top of everything else:
     return List::create(Named("updates") = update_list,
                         Named("posterior_means") = pm_list,
-                        Named("lfsr") = total_effect_list["lfsr"],// lfsr_mat,
-                        Named("total_effect") = total_effect_list["total_effect"],// total_effect,
+                        Named("lfsr") = lfsr_mat,
+                        Named("total_effect") = total_effect,
                         Named("Z_samples") = Z_mtx,
                         Named("F_samples") = F_mtx,
                         Named("W_samples") = W_mtx,

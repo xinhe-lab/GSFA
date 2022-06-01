@@ -27,6 +27,8 @@ using namespace arma;
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
 List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
+                            int neg_ctrl_index,
+                            bool use_ctrl=false,
                             String prior_type="mixture_normal",
                             String initialize="svd",
                             double prior_s=50, double prior_r=0.1,
@@ -229,24 +231,51 @@ List gsfa_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group, int K,
                              Named("sigma_b20") = sigma_b20, Named("sigma_b21") = sigma_b21,
                              Named("c2") = c2,
                              Named("niter") = niter, Named("used_niter") = ave_niter);
-  // Compute the posterior means:
-  List pm_list;
-  pm_list = compute_posterior_mean_2groups_cpp(Gamma0_mtx, beta0_mtx, pi_beta0_mtx,
-                                               Gamma1_mtx, beta1_mtx, pi_beta1_mtx,
-                                               Z_mtx, F_mtx, W_mtx, pi_mtx,
-                                               sigma_w2_mtx, c2_mtx,
-                                               niter, ave_niter, prior_type);
-  // Compute local false sign rate for each perturbation-gene pair and each of the sample groups:
+  // Local false sign rate for each perturbation-gene pair:
   mat lfsr0_mat(P,M);
   mat total_effect0 = zeros<mat>(P,M);
-  compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx,
-                   lfsr0_mat, total_effect0,
-                   lfsr_niter, prior_type);
   mat lfsr1_mat(P,M);
   mat total_effect1 = zeros<mat>(P,M);
-  compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx,
-                   lfsr1_mat, total_effect1,
-                   lfsr_niter, prior_type);
+  // Compute the posterior means:
+  List pm_list;
+
+  if (use_ctrl){
+    Rprintf("Calibrating effect sizes using the negative control as baseline.\n");
+    cube beta0_adjusted = zeros<cube>(M,K,niter+1);
+    beta0_adjusted = calibrate_beta_vs_negctrl(beta0_mtx, neg_ctrl_index);
+    cube beta1_adjusted = zeros<cube>(M,K,niter+1);
+    beta1_adjusted = calibrate_beta_vs_negctrl(beta1_mtx, neg_ctrl_index);
+
+    Rprintf("Computing total effects for each perturbation-gene pair.\n");
+    compute_lfsr_cpp(beta0_adjusted, W_mtx, F_mtx,
+                     lfsr0_mat, total_effect0,
+                     lfsr_niter, prior_type);
+    compute_lfsr_cpp(beta1_adjusted, W_mtx, F_mtx,
+                     lfsr1_mat, total_effect1,
+                     lfsr_niter, prior_type);
+
+    Rprintf("Computing posterior means of parameters.\n");
+    pm_list = compute_posterior_mean_2groups_cpp(Gamma0_mtx, beta0_adjusted, pi_beta0_mtx,
+                                                 Gamma1_mtx, beta1_adjusted, pi_beta1_mtx,
+                                                 Z_mtx, F_mtx, W_mtx, pi_mtx,
+                                                 sigma_w2_mtx, c2_mtx,
+                                                 niter, ave_niter, prior_type);
+  } else {
+    Rprintf("Computing total effects for each perturbation-gene pair.\n");
+    compute_lfsr_cpp(beta0_mtx, W_mtx, F_mtx,
+                     lfsr0_mat, total_effect0,
+                     lfsr_niter, prior_type);
+    compute_lfsr_cpp(beta1_mtx, W_mtx, F_mtx,
+                     lfsr1_mat, total_effect1,
+                     lfsr_niter, prior_type);
+
+    Rprintf("Computing posterior means of parameters.\n");
+    pm_list = compute_posterior_mean_2groups_cpp(Gamma0_mtx, beta0_mtx, pi_beta0_mtx,
+                                                 Gamma1_mtx, beta1_mtx, pi_beta1_mtx,
+                                                 Z_mtx, F_mtx, W_mtx, pi_mtx,
+                                                 sigma_w2_mtx, c2_mtx,
+                                                 niter, ave_niter, prior_type);
+  }
 
   // CONSTRUCT OUTPUT
   // ----------------------------------------------------------
@@ -297,6 +326,8 @@ List restart_gibbs_2groups_cpp(arma::mat Y, arma::mat G, arma::vec group,
                                arma::vec sigma_b20, arma::vec sigma_b21,
                                arma::vec c2,
                                List prior_params,
+                               int neg_ctrl_index,
+                               bool use_ctrl=false,
                                String prior_type="mixture_normal",
                                int niter=500, int ave_niter=200, int lfsr_niter=200,
                                bool verbose=true, bool return_samples=true){
