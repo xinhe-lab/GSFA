@@ -1,8 +1,8 @@
 Package: GSFA
 Type: Package
 Title: Bayesian Guided Sparse Factor Analysis
-Date: 2022-03-25
-Version: 0.2.7
+Date: 2022-06-03
+Version: 0.2.8
 URL: https://github.com/gradonion/GSFA
 Authors@R: person("Yifan","Zhou",role=c("cre","aut"), email="zhouyf@uchicago.edu")
 Description: Performs Bayesian guided sparse factor analysis on gene expression 
