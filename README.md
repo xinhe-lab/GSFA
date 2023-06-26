@@ -29,7 +29,7 @@ thresholding the local false sign rate (_LFSR_).
 If you find the GSFA package or any of the source code in this
 repository useful for your work, please cite:
 
-> Yifan Zhou, Kaixuan Luo, Mengjie Chen and Xin He. 
+> Yifan Zhou, Kaixuan Luo, Lifan Liang, Mengjie Chen and Xin He. 
 > A novel Bayesian factor analysis method improves detection of genes and 
 > biological processes affected by perturbations in single-cell CRISPR screening. 
 > [*bioRxiv* doi: 10.1101/2022.02.13.480282][biorxiv] (2022).
@@ -47,7 +47,7 @@ To install the development version of the `GSFA` package from Github, run this i
 
 ```R
 install.packages("devtools")
-devtools::install_github("gradonion/GSFA", build_vignettes = TRUE)
+devtools::install_github("xinhe-lab/GSFA", build_vignettes = TRUE)
 ```
 
 Note that installing the package will require a C++ compiler setup that is 
