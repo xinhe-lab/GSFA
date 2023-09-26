@@ -92,7 +92,7 @@ docker run \
 
 ## Using the package
 
-Please see this package vignette for using GSFA on a simulated example:
+Please see this package [vignette][vignette_simulated] for using GSFA on a simulated example:
 
 ```R
 library(GSFA)
@@ -111,3 +111,4 @@ at the University of Chicago.
 [biorxiv]: https://www.biorxiv.org/content/10.1101/2022.02.13.480282v1
 [mit-license]: https://opensource.org/licenses/mit-license.html
 [paper_github]: https://github.com/xinhe-lab/GSFA_paper
+[vignette_simulated]:https://xinhe-lab.github.io/GSFA/articles/gsfa_intro.html
