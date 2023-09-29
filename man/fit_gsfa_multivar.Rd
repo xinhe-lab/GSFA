@@ -51,6 +51,14 @@ or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;}
 \item{init.method}{Method to initialize the factors, can be one of
 "svd" (truncated SVD on \code{Y}) or "random";}
 
+\item{prior_w_s}{prior parameter \eqn{s_{w}};}
+
+\item{prior_w_r}{prior parameter \eqn{r_{w}};}
+
+\item{prior_beta_s}{prior parameter \eqn{s_{b}};}
+
+\item{prior_beta_r}{prior parameter \eqn{r_{b}};}
+
 \item{niter}{Total number of Gibbs sampling iterations;}
 
 \item{used_niter}{Number of iterations (counting from the last iteration)
@@ -72,6 +80,8 @@ information using Gibbs sampling.
 }
 \details{
 Uses functions implemented in Rcpp from \code{GSFA_gibbs_inference.cpp}.
+For details about the GSFA model and prior specification,
+please see the GSFA paper and Supplementary Notes (Section 1).
 }
 \examples{
 \dontrun{

@@ -22,7 +22,7 @@ ontology/pathway enrichment analysis thanks to the sparse gene weights on factor
 (3) detect differentially expressed genes under each genetic perturbation by 
 thresholding the local false sign rate (_LFSR_).
 
-![input output](man/figures/schematic.png)
+![](man/figures/schematic.png)
 
 ## Citing this work
 
@@ -92,7 +92,7 @@ docker run \
 
 ## Using the package
 
-Please see this package vignette for using GSFA on a simulated example:
+Please see this package [vignette][vignette_simulated] for using GSFA on a simulated example:
 
 ```R
 library(GSFA)
@@ -105,8 +105,10 @@ data, please refer to the code and examples in this [repository][paper_github].
 ## Credits
 
 The GSFA package is developed by Yifan Zhou from the
-[He Lab](http://xinhelab.org) at the University of Chicago.
+[He Lab](http://xinhelab.org) and [Chen Lab](http://www.mengjiechen.com) 
+at the University of Chicago.
 
 [biorxiv]: https://www.biorxiv.org/content/10.1101/2022.02.13.480282v1
 [mit-license]: https://opensource.org/licenses/mit-license.html
-[paper_github]: https://github.com/gradonion/GSFA_paper/
+[paper_github]: https://github.com/xinhe-lab/GSFA_paper
+[vignette_simulated]:https://xinhe-lab.github.io/GSFA/articles/gsfa_intro.html

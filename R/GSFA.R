@@ -2,6 +2,8 @@
 #' @description Performs GSFA on given gene expression matrix and matching perturbation
 #' information using Gibbs sampling.
 #' @details Uses functions implemented in Rcpp from \code{GSFA_gibbs_inference.cpp}.
+#' For details about the GSFA model and prior specification,
+#' please see the GSFA paper and Supplementary Notes (Section 1).
 #' @param Y A sample by gene numeric matrix that stores normalized gene expression values;
 #' \code{is.matrix(Y)} should be \code{TRUE};
 #' @param G Either a numeric vector or a sample by perturbation numeric matrix
@@ -18,6 +20,10 @@
 #' an integer from 1 to the total number of perturbation groups in \code{G};
 #' @param prior_type Type of sparse prior used on gene weights, can be "mixture_normal"
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
+#' @param prior_w_s prior parameter \eqn{s_{w}};
+#' @param prior_w_r prior parameter \eqn{r_{w}};
+#' @param prior_beta_s prior parameter \eqn{s_{b}};
+#' @param prior_beta_r prior parameter \eqn{r_{b}};
 #' @param init.method Method to initialize the factors, can be one of
 #' "svd" (truncated SVD on \code{Y}) or "random";
 #' @param niter Total number of Gibbs sampling iterations;
@@ -164,6 +170,8 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' information using Gibbs sampling for samples that come from two groups
 #' @details Similar to the function \code{fit_gsfa_multivar()}, but associations
 #' between factors and perturbations are estimated for each group of samples separately.
+#' For details about the GSFA model and prior specification,
+#' please see the GSFA paper and Supplementary Notes (Section 1).
 #' @param Y A sample by gene numeric matrix that stores normalized gene expression values;
 #' \code{is.matrix(Y)} should be \code{TRUE};
 #' @param G Either a numeric vector or a sample by perturbation numeric matrix
@@ -181,6 +189,10 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
 #' @param init.method Method to initialize the factors, can be one of
 #' "svd" (truncated SVD on \code{Y}) or "random";
+#' @param prior_w_s prior parameter \eqn{s_{w}};
+#' @param prior_w_r prior parameter \eqn{r_{w}};
+#' @param prior_beta_s prior parameter \eqn{s_{b}};
+#' @param prior_beta_r prior parameter \eqn{r_{b}};
 #' @param niter Total number of Gibbs sampling iterations;
 #' @param used_niter Number of iterations (counting from the last iteration)
 #' from which the posterior means of parameters are to be computed;
