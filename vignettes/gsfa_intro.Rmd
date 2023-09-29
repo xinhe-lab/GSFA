@@ -75,8 +75,8 @@ last 500 iterations.
 
 `prior_w_s`, `prior_w_r` are prior parameters of the gene loading on the factors, 
 `prior_beta_s`, and `prior_beta_r` are prior parameter of the effects of perturbations 
-on the factors. See the GSFA paper and Supplementary Notes 
-(Section 1: Model specification and inference) for more details.
+on the factors. For details about the GSFA model and prior specification, 
+please see the GSFA paper and Supplementary Notes (Section 1).
 
 ```{r fit-normal}
 fit0 <- fit_gsfa_multivar(Y = sim_data$Y, G = sim_data$G,
