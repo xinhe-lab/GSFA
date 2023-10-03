@@ -32,7 +32,7 @@ repository useful for your work, please cite:
 > Yifan Zhou, Kaixuan Luo, Lifan Liang, Mengjie Chen and Xin He. 
 > A new Bayesian factor analysis method improves detection of genes 
 > and biological processes affected by perturbations in single-cell CRISPR screening.
-> Nat Methods. (2023). doi: 10.1038/s41592-023-02017-4. PMID: 37770710.
+> _Nature Methods_. (2023). doi: 10.1038/s41592-023-02017-4. PMID: 37770710.
 
 ## License
 
