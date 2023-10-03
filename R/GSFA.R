@@ -20,10 +20,10 @@
 #' an integer from 1 to the total number of perturbation groups in \code{G};
 #' @param prior_type Type of sparse prior used on gene weights, can be "mixture_normal"
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
-#' @param prior_w_s prior parameter \eqn{s_{w}};
-#' @param prior_w_r prior parameter \eqn{r_{w}};
-#' @param prior_beta_s prior parameter \eqn{s_{b}};
-#' @param prior_beta_r prior parameter \eqn{r_{b}};
+#' @param prior_w_s,prior_w_r prior parameters (\eqn{s_{w}} and \eqn{r_{w}}) of
+#' the gene loading on the factors;
+#' @param prior_beta_s,prior_beta_r prior parameters (\eqn{s_{b}} and \eqn{r_{b}})
+#' of the effects of perturbations on the factors;
 #' @param init.method Method to initialize the factors, can be one of
 #' "svd" (truncated SVD on \code{Y}) or "random";
 #' @param niter Total number of Gibbs sampling iterations;
@@ -189,10 +189,10 @@ fit_gsfa_multivar <- function(Y, G, K, fit0,
 #' or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;
 #' @param init.method Method to initialize the factors, can be one of
 #' "svd" (truncated SVD on \code{Y}) or "random";
-#' @param prior_w_s prior parameter \eqn{s_{w}};
-#' @param prior_w_r prior parameter \eqn{r_{w}};
-#' @param prior_beta_s prior parameter \eqn{s_{b}};
-#' @param prior_beta_r prior parameter \eqn{r_{b}};
+#' @param prior_w_s,prior_w_r prior parameters (\eqn{s_{w}} and \eqn{r_{w}}) of
+#' the gene loading on the factors;
+#' @param prior_beta_s,prior_beta_r prior parameters (\eqn{s_{b}} and \eqn{r_{b}})
+#' of the effects of perturbations on the factors;
 #' @param niter Total number of Gibbs sampling iterations;
 #' @param used_niter Number of iterations (counting from the last iteration)
 #' from which the posterior means of parameters are to be computed;

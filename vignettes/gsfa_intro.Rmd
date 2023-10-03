@@ -74,7 +74,7 @@ truncated SVD for 1000 iterations, with the posterior means computed using the
 last 500 iterations.
 
 `prior_w_s`, `prior_w_r` are prior parameters of the gene loading on the factors, 
-`prior_beta_s`, and `prior_beta_r` are prior parameter of the effects of perturbations 
+`prior_beta_s`, and `prior_beta_r` are prior parameters of the effects of perturbations 
 on the factors. For details about the GSFA model and prior specification, 
 please see the GSFA paper and Supplementary Notes (Section 1).
 
