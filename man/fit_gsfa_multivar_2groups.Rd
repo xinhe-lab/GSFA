@@ -50,13 +50,11 @@ or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;}
 \item{init.method}{Method to initialize the factors, can be one of
 "svd" (truncated SVD on \code{Y}) or "random";}
 
-\item{prior_w_s}{prior parameter \eqn{s_{w}};}
+\item{prior_w_s, prior_w_r}{prior parameters (\eqn{s_{w}} and \eqn{r_{w}}) of
+the gene loading on the factors;}
 
-\item{prior_w_r}{prior parameter \eqn{r_{w}};}
-
-\item{prior_beta_s}{prior parameter \eqn{s_{b}};}
-
-\item{prior_beta_r}{prior parameter \eqn{r_{b}};}
+\item{prior_beta_s, prior_beta_r}{prior parameters (\eqn{s_{b}} and \eqn{r_{b}})
+of the effects of perturbations on the factors;}
 
 \item{niter}{Total number of Gibbs sampling iterations;}
 

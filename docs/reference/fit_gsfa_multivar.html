@@ -33,7 +33,7 @@ information using Gibbs sampling."><!-- mathjax --><script src="https://cdnjs.cl
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
       <ul class="navbar-nav"><li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/gradonion/GSFA/" aria-label="github">
+  <a class="external-link nav-link" href="https://github.com/xinhe-lab/GSFA/" aria-label="github">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -46,7 +46,7 @@ information using Gibbs sampling."><!-- mathjax --><script src="https://cdnjs.cl
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Bayesian Guided Sparse Factor Analysis on Perturbed Gene Expression Matrix</h1>
-      <small class="dont-index">Source: <a href="https://github.com/gradonion/GSFA/blob/HEAD/R/GSFA.R" class="external-link"><code>R/GSFA.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/xinhe-lab/GSFA/blob/HEAD/R/GSFA.R" class="external-link"><code>R/GSFA.R</code></a></small>
       <div class="d-none name"><code>fit_gsfa_multivar.Rd</code></div>
     </div>
 
@@ -122,20 +122,14 @@ or "spike_slab", "mixture_normal" sometimes works better in inducing sparsity;</
 "svd" (truncated SVD on <code>Y</code>) or "random";</p></dd>
 
 
-<dt>prior_w_s</dt>
-<dd><p>prior parameter \(s_{w}\);</p></dd>
+<dt>prior_w_s, prior_w_r</dt>
+<dd><p>prior parameters (\(s_{w}\) and \(r_{w}\)) of
+the gene loading on the factors;</p></dd>
 
 
-<dt>prior_w_r</dt>
-<dd><p>prior parameter \(r_{w}\);</p></dd>
-
-
-<dt>prior_beta_s</dt>
-<dd><p>prior parameter \(s_{b}\);</p></dd>
-
-
-<dt>prior_beta_r</dt>
-<dd><p>prior parameter \(r_{b}\);</p></dd>
+<dt>prior_beta_s, prior_beta_r</dt>
+<dd><p>prior parameters (\(s_{b}\) and \(r_{b}\))
+of the effects of perturbations on the factors;</p></dd>
 
 
 <dt>niter</dt>
